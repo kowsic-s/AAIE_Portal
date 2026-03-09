@@ -34,9 +34,9 @@ import StudentRecommendations from './pages/student/Recommendations'
 
 const PAGE_TITLES = {
   '/admin/dashboard': 'Dashboard',
-  '/admin/users': 'User Management',
+  '/admin/users': 'Users',
   '/admin/departments': 'Departments',
-  '/admin/settings': 'System Settings',
+  '/admin/settings': 'Settings',
   '/admin/model': 'Model Governance',
   '/admin/bulk-upload': 'Bulk Upload',
   '/staff/dashboard': 'Dashboard',
@@ -49,39 +49,42 @@ const PAGE_TITLES = {
   '/student/recommendations': 'AI Recommendations',
 }
 
-const BackgroundOrbs = () => (
-  <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-    <div className="absolute -top-48 -left-36 w-[600px] h-[600px] rounded-full opacity-[0.08] blur-[120px] animate-float1"
-      style={{ background: 'radial-gradient(circle, #3b82f6, transparent 70%)' }} />
-    <div className="absolute top-[40%] -right-24 w-[500px] h-[500px] rounded-full opacity-[0.06] blur-[120px] animate-float2"
-      style={{ background: 'radial-gradient(circle, #8b5cf6, transparent 70%)' }} />
-    <div className="absolute -bottom-24 left-[30%] w-[400px] h-[400px] rounded-full opacity-[0.07] blur-[120px] animate-float3"
-      style={{ background: 'radial-gradient(circle, #06b6d4, transparent 70%)' }} />
-  </div>
-)
+const PAGE_SUBS = {
+  '/admin/dashboard': 'Institution Overview',
+  '/admin/users': 'Manage Accounts',
+  '/admin/departments': 'Manage Departments',
+  '/admin/settings': 'Configure System',
+  '/admin/model': 'ML Version Control',
+  '/admin/bulk-upload': 'Import Records',
+  '/staff/dashboard': 'Department Overview',
+  '/staff/students': 'Monitor Students',
+  '/staff/interventions': 'Track Interventions',
+  '/staff/upload': 'Upload Records',
+  '/student/dashboard': 'Your Overview',
+  '/student/performance': 'Academic Metrics',
+  '/student/what-if': 'Simulate Changes',
+  '/student/recommendations': 'AI Insights',
+}
 
 const AppLayout = ({ children, pagePath }) => {
-  const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const { isAuthenticated, user } = useAuthStore()
+  const { isAuthenticated } = useAuthStore()
 
   if (!isAuthenticated) return children
 
   return (
-    <div className="flex min-h-screen relative">
-      <BackgroundOrbs />
+    <div className="flex min-h-screen" style={{ background: 'var(--bg)' }}>
       <Sidebar
-        collapsed={collapsed}
-        onToggle={() => setCollapsed((c) => !c)}
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
       />
-      <div className="flex-1 flex flex-col min-w-0 relative z-10">
+      <div className="flex-1 flex flex-col min-w-0 lg:ml-[252px]">
         <Navbar
           title={PAGE_TITLES[pagePath] || 'AAIE'}
+          subtitle={PAGE_SUBS[pagePath]}
           onMenuToggle={() => setMobileOpen((o) => !o)}
         />
-        <main className="flex-1 p-4 sm:p-6 overflow-y-auto">{children}</main>
+        <main className="flex-1 p-4 sm:p-8 overflow-y-auto">{children}</main>
       </div>
     </div>
   )

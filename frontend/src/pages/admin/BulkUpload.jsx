@@ -86,22 +86,20 @@ const AdminBulkUpload = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-[#f0f4ff]">Bulk Upload</h1>
-        <p className="text-[#94a3b8] mt-1">Import students or staff accounts via CSV</p>
+      <div className="flex items-center justify-between">
+        <span className="text-[0.82rem]" style={{ color: 'var(--text-2)' }}>Import students or staff accounts via CSV</span>
       </div>
 
       {/* Type Tabs */}
-      <div className="flex gap-3">
+      <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
         {UPLOAD_TYPES.map((t) => (
           <button
             key={t.key}
             onClick={() => switchType(t)}
-            className={`px-4 py-2 rounded-lg font-medium text-sm border transition-colors ${
-              activeType.key === t.key
-                ? 'bg-[#3b82f6] text-white border-[#3b82f6]'
-                : 'text-[#94a3b8] border-white/10 hover:border-[#3b82f6]/40 bg-white/[0.05]'
-            }`}
+            className="px-4 py-2 rounded-lg text-[0.82rem] font-semibold transition-all"
+            style={activeType.key === t.key
+              ? { background: 'var(--accent)', color: '#fff', boxShadow: '0 0 12px var(--glow-a)' }
+              : { color: 'var(--text-3)' }}
           >
             {t.label}
           </button>
@@ -109,13 +107,13 @@ const AdminBulkUpload = () => {
       </div>
 
       {/* Hint + Example */}
-      <div className="rounded-xl px-4 py-3 space-y-2 border border-[rgba(59,130,246,0.3)]" style={{ background: 'rgba(59,130,246,0.08)' }}>
-        <p className="text-sm font-medium text-[#3b82f6]">{activeType.hint}</p>
-        <details className="text-sm text-[#94a3b8]">
-          <summary className="cursor-pointer select-none text-xs font-semibold uppercase tracking-wide text-[#3b82f6]/70">
+      <div className="rounded-xl px-5 py-3.5 space-y-2" style={{ background: 'rgba(79,142,247,0.08)', border: '1px solid rgba(79,142,247,0.2)' }}>
+        <p className="text-[0.82rem] font-medium" style={{ color: 'var(--accent)' }}>{activeType.hint}</p>
+        <details className="text-[0.82rem]" style={{ color: 'var(--text-2)' }}>
+          <summary className="cursor-pointer select-none text-[0.68rem] font-bold uppercase tracking-wider" style={{ color: 'var(--text-3)' }}>
             Show example
           </summary>
-          <pre className="mt-2 border border-white/10 rounded p-3 text-xs font-mono text-[#94a3b8] overflow-x-auto whitespace-pre-wrap" style={{ background: 'rgba(255,255,255,0.03)' }}>
+          <pre className="mt-2 rounded p-3 text-xs font-mono overflow-x-auto whitespace-pre-wrap" style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text-2)' }}>
             {activeType.example}
           </pre>
         </details>
@@ -123,9 +121,8 @@ const AdminBulkUpload = () => {
 
       {/* Drop Zone */}
       <div
-        className={`border-2 border-dashed rounded-2xl p-10 text-center transition-colors cursor-pointer ${
-          dragOver ? 'border-[#3b82f6] bg-[rgba(59,130,246,0.08)]' : 'border-white/10 hover:border-[#3b82f6]/40 hover:bg-white/[0.03]'
-        }`}
+        className="border-2 border-dashed rounded-2xl p-10 text-center transition-colors cursor-pointer"
+        style={{ borderColor: dragOver ? 'var(--accent)' : 'var(--border)', background: dragOver ? 'rgba(79,142,247,0.08)' : 'var(--surface)' }}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
@@ -140,14 +137,14 @@ const AdminBulkUpload = () => {
         />
         <div className="text-4xl mb-3">📂</div>
         {file ? (
-          <p className="font-medium text-[#f0f4ff]">
+          <p className="font-medium" style={{ color: 'var(--text-1)' }}>
             {file.name}{' '}
-            <span className="text-[#475569] text-sm">({(file.size / 1024).toFixed(1)} KB)</span>
+            <span className="text-sm" style={{ color: 'var(--text-3)' }}>({(file.size / 1024).toFixed(1)} KB)</span>
           </p>
         ) : (
           <>
-            <p className="font-medium text-[#f0f4ff]">Drop your CSV here, or click to browse</p>
-            <p className="text-[#475569] text-sm mt-1">.csv files only</p>
+            <p className="font-medium" style={{ color: 'var(--text-1)' }}>Drop your CSV here, or click to browse</p>
+            <p className="text-sm mt-1" style={{ color: 'var(--text-3)' }}>.csv files only</p>
           </>
         )}
       </div>
@@ -159,22 +156,25 @@ const AdminBulkUpload = () => {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="card overflow-x-auto"
+            className="overflow-x-auto overflow-hidden"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, boxShadow: 'var(--shadow), var(--inset)' }}
           >
-            <h2 className="font-semibold text-[#f0f4ff] mb-3">Preview (first 5 rows)</h2>
+            <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
+              <span className="font-display text-[0.9rem] font-bold" style={{ color: 'var(--text-1)' }}>Preview (first 5 rows)</span>
+            </div>
             <table className="text-sm w-full">
               <thead>
-                <tr className="border-b border-white/[0.06]">
+                <tr>
                   {preview.headers.map((h) => (
-                    <th key={h} className="text-left py-2 px-3 text-[#94a3b8] font-medium">{h}</th>
+                    <th key={h} className="text-left py-2.5 px-4 text-[0.68rem] font-bold uppercase tracking-wider" style={{ color: 'var(--text-3)', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {preview.rows.map((row, i) => (
-                  <tr key={i} className="border-b border-white/[0.06] last:border-0">
+                  <tr key={i}>
                     {preview.headers.map((h) => (
-                      <td key={h} className="py-2 px-3 text-[#94a3b8]">{row[h]}</td>
+                      <td key={h} className="py-2.5 px-4 text-[0.82rem]" style={{ color: 'var(--text-2)', borderBottom: '1px solid var(--border)' }}>{row[h]}</td>
                     ))}
                   </tr>
                 ))}
@@ -205,7 +205,7 @@ const AdminBulkUpload = () => {
 
       {/* Error */}
       {uploadMut.isError && (
-        <div className="rounded-xl px-4 py-3 text-sm text-[#ef4444] border border-[rgba(239,68,68,0.3)]" style={{ background: 'rgba(239,68,68,0.1)' }}>
+        <div className="rounded-xl px-5 py-3 text-[0.82rem]" style={{ color: 'var(--risk-high)', background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)' }}>
           Upload failed: {uploadMut.error?.response?.data?.detail ?? uploadMut.error?.message ?? 'Unknown error'}
         </div>
       )}
@@ -216,34 +216,35 @@ const AdminBulkUpload = () => {
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="card space-y-4"
+            className="space-y-4 p-6 overflow-hidden"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, boxShadow: 'var(--shadow), var(--inset)' }}
           >
-            <h2 className="font-semibold text-[#f0f4ff]">Upload Result</h2>
+            <span className="font-display text-[0.9rem] font-bold" style={{ color: 'var(--text-1)' }}>Upload Result</span>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="rounded-xl p-4 text-center border border-white/10" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                <p className="text-2xl font-bold text-[#f0f4ff]">{result.total}</p>
-                <p className="text-sm text-[#94a3b8] mt-0.5">Total Rows</p>
+              <div className="rounded-xl p-4 text-center" style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+                <p className="font-display text-[1.6rem] font-extrabold" style={{ color: 'var(--text-1)' }}>{result.total}</p>
+                <p className="text-[0.75rem]" style={{ color: 'var(--text-3)' }}>Total Rows</p>
               </div>
-              <div className="rounded-xl p-4 text-center border border-[rgba(16,185,129,0.3)]" style={{ background: 'rgba(16,185,129,0.08)' }}>
-                <p className="text-2xl font-bold text-[#10b981]">{result.created}</p>
-                <p className="text-sm text-[#10b981] mt-0.5">Created</p>
+              <div className="rounded-xl p-4 text-center" style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.25)' }}>
+                <p className="font-display text-[1.6rem] font-extrabold" style={{ color: 'var(--risk-low)' }}>{result.created}</p>
+                <p className="text-[0.75rem]" style={{ color: 'var(--risk-low)' }}>Created</p>
               </div>
-              <div className="rounded-xl p-4 text-center border border-[rgba(245,158,11,0.3)]" style={{ background: 'rgba(245,158,11,0.08)' }}>
-                <p className="text-2xl font-bold text-[#f59e0b]">{result.skipped ?? result.updated ?? 0}</p>
-                <p className="text-sm text-[#f59e0b] mt-0.5">Skipped</p>
+              <div className="rounded-xl p-4 text-center" style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)' }}>
+                <p className="font-display text-[1.6rem] font-extrabold" style={{ color: 'var(--risk-med)' }}>{result.skipped ?? result.updated ?? 0}</p>
+                <p className="text-[0.75rem]" style={{ color: 'var(--risk-med)' }}>Skipped</p>
               </div>
-              <div className="rounded-xl p-4 text-center border border-[rgba(239,68,68,0.3)]" style={{ background: 'rgba(239,68,68,0.08)' }}>
-                <p className="text-2xl font-bold text-[#ef4444]">{result.errors?.length ?? result.failed ?? 0}</p>
-                <p className="text-sm text-[#ef4444] mt-0.5">Errors</p>
+              <div className="rounded-xl p-4 text-center" style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.25)' }}>
+                <p className="font-display text-[1.6rem] font-extrabold" style={{ color: 'var(--risk-high)' }}>{result.errors?.length ?? result.failed ?? 0}</p>
+                <p className="text-[0.75rem]" style={{ color: 'var(--risk-high)' }}>Errors</p>
               </div>
             </div>
 
             {result.errors?.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-[#ef4444]">Row Errors</h3>
+                <h3 className="text-[0.82rem] font-semibold" style={{ color: 'var(--risk-high)' }}>Row Errors</h3>
                 <div className="max-h-48 overflow-y-auto space-y-1">
                   {result.errors.map((e, i) => (
-                    <div key={i} className="text-xs rounded px-3 py-1.5 text-[#ef4444] border border-[rgba(239,68,68,0.2)]" style={{ background: 'rgba(239,68,68,0.06)' }}>
+                    <div key={i} className="text-xs rounded px-3 py-1.5" style={{ color: 'var(--risk-high)', background: 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.15)' }}>
                       <span className="font-semibold">Row {e.row}:</span> {e.reason}
                     </div>
                   ))}

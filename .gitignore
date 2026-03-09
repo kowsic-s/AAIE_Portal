@@ -70,3 +70,12 @@ coverage.xml
 *.pem
 *.key
 .env.production
+
+# ── Lock files ────────────────────────────────────────────────────────────────
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ── Design mockups / scratch ──────────────────────────────────────────────────
+*.html
+!frontend/index.html
