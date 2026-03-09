@@ -1,0 +1,72 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+.env
+.venv
+env/
+venv/
+ENV/
+
+# ── ML artifacts ──────────────────────────────────────────────────────────────
+backend/app/ml/models/*.joblib
+backend/app/ml/models/registry.json
+
+# ── Node / Frontend ───────────────────────────────────────────────────────────
+node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.production
+
+# ── Alembic ───────────────────────────────────────────────────────────────────
+# Keep versions tracked, but ignore __pycache__
+backend/alembic/__pycache__/
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+.docker/
+
+# ── Database ──────────────────────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDE ──────────────────────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# ── Test / Coverage ───────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.cover
+
+# ── Secrets ───────────────────────────────────────────────────────────────────
+*.pem
+*.key
+.env.production

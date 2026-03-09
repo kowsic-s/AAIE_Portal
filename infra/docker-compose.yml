@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: aaie_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: aaie
+      MYSQL_USER: aaie_user
+      MYSQL_PASSWORD: aaie_pass
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "aaie_user", "-paaie_pass"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: aaie_backend
+    restart: unless-stopped
+    env_file:
+      - ../backend/.env
+    environment:
+      DATABASE_URL: mysql+asyncmy://aaie_user:aaie_pass@db:3306/aaie
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../backend/app/ml/models:/app/app/ml/models
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: aaie_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
+    driver: local
