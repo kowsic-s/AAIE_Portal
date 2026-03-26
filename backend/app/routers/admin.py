@@ -28,14 +28,21 @@ from app.models.department import Department
 from app.models.prediction import Prediction
 from app.models.audit_log import AuditLog
 from app.models.settings import ModelRegistry as ModelRegistryDB, SystemSettings
-from app.schemas.user import UserCreate, UserUpdate, UserResponse, UserListResponse
+from app.schemas.user import (
+    UserCreate,
+    UserUpdate,
+    UserResponse,
+    UserListResponse,
+    AdminSetPassword,
+)
 from app.services.user_service import (
     list_users,
     create_user,
     update_user,
     toggle_user_active,
     reset_user_password,
-    soft_delete_user,
+    set_user_password,
+    delete_user,
 )
 from app.services.upload_service import bulk_upload_students, bulk_upload_staff
 from app.services.prediction_service import run_prediction_for_student, get_system_settings
@@ -180,7 +187,7 @@ async def admin_delete_user(
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = AdminUser,
 ):
-    deleted = await soft_delete_user(db, user_id)
+    deleted = await delete_user(db, user_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="User not found")
     await write_audit_log(db, current_user.id, "user_deleted", "user", user_id)
@@ -214,6 +221,21 @@ async def admin_reset_password(
     await write_audit_log(db, current_user.id, "password_reset", "user", user_id)
     await db.commit()
     return {"temp_password": temp_pass}
+
+
+@router.post("/users/{user_id}/set-password")
+async def admin_set_password(
+    user_id: int,
+    body: AdminSetPassword,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = AdminUser,
+):
+    changed = await set_user_password(db, user_id, body.new_password)
+    if not changed:
+        raise HTTPException(status_code=404, detail="User not found")
+    await write_audit_log(db, current_user.id, "password_changed", "user", user_id)
+    await db.commit()
+    return {"message": "Password updated"}
 
 
 # ── Departments ──────────────────────────────────────────────────────────────
@@ -374,6 +396,8 @@ async def get_settings_endpoint(
         "activity_weight": s.activity_weight,
         "placement_gpa_floor": s.placement_gpa_floor,
         "placement_attendance_floor": s.placement_attendance_floor,
+        "placement_reward_floor": s.placement_reward_floor,
+        "placement_activity_floor": s.placement_activity_floor,
         "updated_at": s.updated_at.isoformat() if s.updated_at else None,
     }
 
@@ -389,12 +413,18 @@ async def update_settings_endpoint(
         "high_risk_threshold", "medium_risk_threshold",
         "attendance_weight", "gpa_weight", "reward_weight", "activity_weight",
         "placement_gpa_floor", "placement_attendance_floor",
+        "placement_reward_floor", "placement_activity_floor",
     ]
     for field in allowed_fields:
         if field in body:
             setattr(s, field, float(body[field]))
 
-    get_engine().update_thresholds(s.placement_gpa_floor, s.placement_attendance_floor)
+    get_engine().update_thresholds(
+        s.placement_gpa_floor,
+        s.placement_attendance_floor,
+        s.placement_reward_floor,
+        s.placement_activity_floor,
+    )
     await write_audit_log(db, current_user.id, "settings_updated", "system_settings", 1, metadata=body)
     await db.commit()
     await db.refresh(s)

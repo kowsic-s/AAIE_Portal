@@ -5,7 +5,8 @@ export const useStudents = (params) => {
   const query = useQuery({
     queryKey: ['students', params],
     queryFn: () => getStaffStudents(params).then((r) => r.data),
-    staleTime: 2 * 60 * 1000,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
   })
   return {
     students: query.data?.items ?? query.data?.students ?? (Array.isArray(query.data) ? query.data : []),
@@ -20,7 +21,8 @@ export const useStudentDetail = (id) => {
   const query = useQuery({
     queryKey: ['student-detail', id],
     queryFn: () => getStudentDetail(id).then((r) => r.data),
-    staleTime: 2 * 60 * 1000,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
     enabled: !!id,
   })
   return {

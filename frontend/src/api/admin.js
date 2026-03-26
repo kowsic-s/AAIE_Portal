@@ -43,6 +43,7 @@ export const getAuditLogs = (params) => apiClient.get('/admin/audit-logs', { par
 export const listUsers = (params) => apiClient.get('/admin/users', { params })
 export const toggleUserActive = (id) => apiClient.post(`/admin/users/${id}/block`)
 export const resetUserPassword = (id) => apiClient.post(`/admin/users/${id}/reset-password`)
+export const setUserPassword = (id, newPassword) => apiClient.post(`/admin/users/${id}/set-password`, { new_password: newPassword })
 export const listDepartments = () => apiClient.get('/admin/departments')
 export const getSystemSettings = () => apiClient.get('/admin/settings')
 export const updateSystemSettings = (data) => apiClient.put('/admin/settings', data)

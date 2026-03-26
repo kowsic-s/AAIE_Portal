@@ -86,6 +86,8 @@ async def simulate_prediction(
     engine.update_thresholds(
         sys_settings.placement_gpa_floor,
         sys_settings.placement_attendance_floor,
+        sys_settings.placement_reward_floor,
+        sys_settings.placement_activity_floor,
     )
 
     features = {
@@ -188,7 +190,6 @@ async def get_model_info(
 @router.get("/health")
 async def ml_health(
     db: AsyncSession = Depends(get_db),
-    current_user: CurrentUser = AdminUser,
 ):
     engine = get_engine()
     return {

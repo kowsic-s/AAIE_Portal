@@ -11,31 +11,39 @@ import GpaTrendChart from '../../components/charts/GpaTrendChart'
 import AttendanceChart from '../../components/charts/AttendanceChart'
 import { formatDate } from '../../utils/formatters'
 
-const STATUS_OPTIONS = ['Scheduled', 'In Progress', 'Completed', 'Cancelled']
-const TYPE_OPTIONS = ['Academic', 'Counseling', 'Mentorship', 'Peer Support', 'Parental']
+const TYPE_OPTIONS = [
+  { label: 'Academic Support', value: 'academic_support' },
+  { label: 'Counselling', value: 'counselling' },
+  { label: 'Warning Letter', value: 'warning_letter' },
+  { label: 'Parent Meeting', value: 'parent_meeting' },
+  { label: 'Peer Mentoring', value: 'peer_mentoring' },
+]
 
 const StudentDetail = () => {
   const { id } = useParams()
   const qc = useQueryClient()
   const [showIntModal, setShowIntModal] = useState(false)
-  const [intForm, setIntForm] = useState({ type: 'Academic', description: '', scheduled_date: '', notes: '' })
+  const [intForm, setIntForm] = useState({ type: 'academic_support', description: '' })
   const [genLoading, setGenLoading] = useState(false)
 
-  const { student, isLoading, isError } = useStudentDetail(id)
+  const { student, isLoading, isError, refetch } = useStudentDetail(id)
 
   const recQuery = useQuery({
     queryKey: ['staff-recommendations', id],
     queryFn: () => getRecommendations(id),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000,
   })
 
   const createIntMut = useMutation({
     mutationFn: (payload) => createIntervention(id, payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['student-detail', id] })
+      refetch()
       setShowIntModal(false)
-      setIntForm({ type: 'Academic', description: '', scheduled_date: '', notes: '' })
+      setIntForm({ type: 'academic_support', description: '' })
       toast.success('Intervention added')
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.detail || 'Failed to add intervention')
     },
   })
 
@@ -62,17 +70,17 @@ const StudentDetail = () => {
   const recommendations = recQuery.data?.data?.recommendations ?? []
 
   return (
-    <div className="space-y-6">
+    <div className="portal-page">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="portal-header">
         <div className="flex items-center gap-4">
-          <Link to="/staff/students" className="text-[#475569] hover:text-[#f0f4ff] transition-colors">←</Link>
+          <Link to="/staff/students" className="transition-colors" style={{ color: 'var(--text-3)' }}>←</Link>
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-xl" style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)' }}>
             {student.name?.charAt(0) ?? '?'}
           </div>
           <div>
-            <h1 className="text-xl font-bold text-[#f0f4ff]">{student.name}</h1>
-            <p className="text-[#94a3b8] text-sm">{student.student_code} · {student.department_name}</p>
+            <h1 className="portal-title">{student.name}</h1>
+            <p className="portal-subtitle">{student.student_code} · {student.department_name}</p>
           </div>
         </div>
         <RiskBadge level={pred.risk_level} size="lg" />
@@ -89,11 +97,11 @@ const StudentDetail = () => {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card">
-          <h2 className="font-semibold text-[#f0f4ff] mb-4">GPA Trend</h2>
+          <h2 className="portal-section-title mb-4">GPA Trend</h2>
           <GpaTrendChart data={perfHistory} />
         </div>
         <div className="card">
-          <h2 className="font-semibold text-[#f0f4ff] mb-4">Attendance Trend</h2>
+          <h2 className="portal-section-title mb-4">Attendance Trend</h2>
           <AttendanceChart data={perfHistory} />
         </div>
       </div>
@@ -101,8 +109,8 @@ const StudentDetail = () => {
       {/* AI Explanation */}
       {pred.explanation && (
         <div className="card border border-[rgba(59,130,246,0.3)]" style={{ background: 'rgba(59,130,246,0.06)' }}>
-          <h2 className="font-semibold text-[#3b82f6] mb-2">AI Risk Explanation</h2>
-          <p className="text-[#94a3b8] text-sm">{pred.explanation}</p>
+          <h2 className="portal-section-title mb-2" style={{ color: 'var(--accent)' }}>AI Risk Explanation</h2>
+          <p className="portal-muted">{pred.explanation}</p>
           {pred.top_factors && (
             <div className="mt-3 flex flex-wrap gap-2">
               {pred.top_factors.map((f) => (
@@ -117,26 +125,26 @@ const StudentDetail = () => {
 
       {/* Interventions */}
       <div className="card">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-[#f0f4ff]">Interventions</h2>
+        <div className="portal-panel-head">
+          <h2 className="portal-section-title">Interventions</h2>
           <button className="btn-primary text-sm" onClick={() => setShowIntModal(true)}>+ Add</button>
         </div>
         {interventions.length === 0 ? (
-          <p className="text-[#475569] text-sm">No interventions recorded.</p>
+          <p className="portal-muted" style={{ color: 'var(--text-3)' }}>No interventions recorded.</p>
         ) : (
           <div className="space-y-3">
             {interventions.map((iv) => (
-              <div key={iv.id} className="flex items-start justify-between p-3 rounded-xl border border-white/[0.06]" style={{ background: 'rgba(255,255,255,0.03)' }}>
+              <div key={iv.id} className="flex items-start justify-between p-3 rounded-xl border border-white/[0.06]" style={{ background: 'var(--surface-2)', borderColor: 'var(--border)' }}>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-[#f0f4ff]">{iv.type}</span>
+                    <span className="text-sm font-medium" style={{ color: 'var(--text-1)' }}>{iv.type}</span>
                     <span className={`badge text-xs ${
                       iv.status === 'Completed' ? 'badge-green' :
                       iv.status === 'Cancelled' ? 'badge-red' : 'badge-blue'
                     }`}>{iv.status}</span>
                   </div>
-                  <p className="text-xs text-[#94a3b8] mt-0.5">{iv.description}</p>
-                  {iv.scheduled_date && <p className="text-xs text-[#475569] mt-0.5">Scheduled: {formatDate(iv.scheduled_date)}</p>}
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--text-2)' }}>{iv.description}</p>
+                  {iv.scheduled_date && <p className="text-xs mt-0.5" style={{ color: 'var(--text-3)' }}>Scheduled: {formatDate(iv.scheduled_date)}</p>}
                 </div>
               </div>
             ))}
@@ -146,20 +154,20 @@ const StudentDetail = () => {
 
       {/* Recommendations */}
       <div className="card">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-[#f0f4ff]">AI Recommendations</h2>
+        <div className="portal-panel-head">
+          <h2 className="portal-section-title">AI Recommendations</h2>
           <button className="btn-secondary text-sm" onClick={handleGenerateRec} disabled={genLoading}>
             {genLoading ? 'Generating...' : '✨ Generate / Refresh'}
           </button>
         </div>
         {recommendations.length === 0 ? (
-          <p className="text-[#475569] text-sm">No recommendations yet. Click Generate to create one.</p>
+          <p className="portal-muted" style={{ color: 'var(--text-3)' }}>No recommendations yet. Click Generate to create one.</p>
         ) : (
           <div className="space-y-3">
             {recommendations.slice(0, 1).map((r) => (
-              <div key={r.id} className="prose prose-sm max-w-none text-[#94a3b8] whitespace-pre-line">
+              <div key={r.id} className="prose prose-sm max-w-none whitespace-pre-line" style={{ color: 'var(--text-2)' }}>
                 {r.content}
-                <p className="text-xs text-[#475569] mt-2">Generated: {formatDate(r.generated_at)}</p>
+                <p className="text-xs mt-2" style={{ color: 'var(--text-3)' }}>Generated: {formatDate(r.generated_at)}</p>
               </div>
             ))}
           </div>
@@ -169,39 +177,31 @@ const StudentDetail = () => {
       {/* Add Intervention Modal */}
       <AnimatePresence>
         {showIntModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'color-mix(in srgb, var(--bg) 72%, #000 28%)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               className="rounded-2xl w-full max-w-md p-6 border border-white/10"
-              style={{ background: 'rgba(15,23,42,0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
+              style={{ background: 'var(--surface-3)', borderColor: 'var(--border)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: 'var(--shadow), var(--inset)' }}
             >
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-[#f0f4ff]">Add Intervention</h2>
-                <button onClick={() => setShowIntModal(false)} className="text-[#475569] hover:text-[#f0f4ff] text-xl transition-colors">×</button>
+                <h2 className="portal-section-title">Add Intervention</h2>
+                <button onClick={() => setShowIntModal(false)} className="text-xl transition-colors" style={{ color: 'var(--text-3)' }}>×</button>
               </div>
               <form
                 onSubmit={(e) => { e.preventDefault(); createIntMut.mutate(intForm) }}
                 className="space-y-4"
               >
                 <div>
-                  <label className="block text-sm font-medium text-[#94a3b8] mb-1">Type</label>
+                  <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-2)' }}>Type</label>
                   <select className="input-field" value={intForm.type} onChange={(e) => setIntForm(p => ({ ...p, type: e.target.value }))}>
-                    {TYPE_OPTIONS.map(t => <option key={t}>{t}</option>)}
+                    {TYPE_OPTIONS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#94a3b8] mb-1">Description</label>
-                  <textarea className="input-field min-h-[80px]" required value={intForm.description} onChange={(e) => setIntForm(p => ({ ...p, description: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#94a3b8] mb-1">Scheduled Date</label>
-                  <input type="date" className="input-field" value={intForm.scheduled_date} onChange={(e) => setIntForm(p => ({ ...p, scheduled_date: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#94a3b8] mb-1">Notes</label>
-                  <textarea className="input-field" value={intForm.notes} onChange={(e) => setIntForm(p => ({ ...p, notes: e.target.value }))} />
+                  <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-2)' }}>Description</label>
+                  <textarea className="input-field min-h-[80px]" required value={intForm.description} onChange={(e) => setIntForm(p => ({ ...p, description: e.target.value }))} placeholder="Describe the intervention details..." />
                 </div>
                 <div className="flex gap-3 pt-2">
                   <button type="submit" disabled={createIntMut.isPending} className="btn-primary flex-1">

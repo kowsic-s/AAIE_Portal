@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   listUsers, createUser, updateUser, toggleUserActive,
-  resetUserPassword, deleteUser,
+  resetUserPassword, setUserPassword, deleteUser,
 } from '../../api/admin'
 import { formatDate } from '../../utils/formatters'
 import { toast } from '../../store/toastStore'
@@ -80,6 +80,7 @@ const AdminUsers = () => {
   const updateMut = useMutation({ mutationFn: ({ id, payload }) => updateUser(id, payload), onSuccess: () => { invalidate(); closeModal(); toast.success('User updated') } })
   const toggleMut = useMutation({ mutationFn: toggleUserActive, onSuccess: () => { invalidate(); toast.success('Status updated') } })
   const resetMut = useMutation({ mutationFn: resetUserPassword, onSuccess: () => { invalidate(); toast.success('Password reset') } })
+  const setPasswordMut = useMutation({ mutationFn: ({ id, newPassword }) => setUserPassword(id, newPassword), onSuccess: () => { invalidate(); toast.success('Password updated') } })
   const deleteMut = useMutation({ mutationFn: deleteUser, onSuccess: () => { invalidate(); toast.success('User deleted') } })
 
   const openCreate = () => { setEditingUser(null); setForm(defaultForm); setFormError(''); setShowModal(true) }
@@ -100,6 +101,16 @@ const AdminUsers = () => {
     } else {
       createMut.mutate({ ...form, department_id: form.department_id || undefined })
     }
+  }
+
+  const handleSetPassword = (userId) => {
+    const newPassword = window.prompt('Enter new password (minimum 6 characters):')
+    if (!newPassword) return
+    if (newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters')
+      return
+    }
+    setPasswordMut.mutate({ id: userId, newPassword })
   }
 
   const initials = (name) => (name || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
@@ -162,7 +173,7 @@ const AdminUsers = () => {
                 <tr><td colSpan={7} className="px-5 py-10 text-center text-sm" style={{ color: 'var(--text-3)' }}>No users found.</td></tr>
               ) : (
                 users.map((u) => (
-                  <tr key={u.id} className="transition-colors hover:bg-[rgba(255,255,255,0.02)]">
+                  <tr key={u.id} className="transition-colors hover:bg-[var(--surface-2)]">
                     <td className="px-5 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
                       <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[0.7rem] font-display font-bold text-white flex-shrink-0"
@@ -191,8 +202,13 @@ const AdminUsers = () => {
                         </button>
                         <button className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
                           style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}
-                          title="Reset password" onClick={() => { if (window.confirm('Reset password to Auto@1234?')) resetMut.mutate(u.id) }}>
+                          title="Reset password" onClick={() => { if (window.confirm('Reset password to an auto-generated temporary password?')) resetMut.mutate(u.id) }}>
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--risk-med)" strokeWidth="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                        </button>
+                        <button className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                          style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}
+                          title="Set custom password" onClick={() => handleSetPassword(u.id)}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2"><rect x="3" y="11" width="18" height="10" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                         </button>
                         <button className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
                           style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.15)' }}
@@ -213,7 +229,7 @@ const AdminUsers = () => {
       <AnimatePresence>
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}>
+            style={{ background: 'color-mix(in srgb, var(--bg) 72%, #000 28%)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}>
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
               className="w-full max-w-[440px] overflow-hidden"
               style={{ background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.55)' }}>
@@ -226,7 +242,7 @@ const AdminUsers = () => {
                 <div className="px-6 py-5 flex flex-col gap-3.5">
                   {formError && <p className="text-[0.8rem]" style={{ color: 'var(--risk-high)' }}>{formError}</p>}
                   <div>
-                    <label className="block text-[0.72rem] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-3)' }}>Full Name</label>
+                    <label className="block text-[0.72rem] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-3)' }}>Name</label>
                     <input className="input-field w-full" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required />
                   </div>
                   <div>

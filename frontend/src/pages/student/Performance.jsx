@@ -15,46 +15,43 @@ const COLUMNS = [
 ]
 
 const StudentPerformance = () => {
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['student-performance'],
     queryFn: getPerformanceHistory,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
   })
 
-  const records = data?.data?.records ?? []
-
-  if (isError) return <div className="text-[#ef4444] p-6">Failed to load performance data.</div>
+  const records = data?.data?.performance_history ?? []
+  if (isError) return <div className="p-6" style={{ color: 'var(--risk-high)' }}>Failed to load performance data.</div>
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-[#f0f4ff]">Performance History</h1>
-        <p className="text-[#94a3b8] mt-1">Your academic performance across semesters</p>
-      </div>
+    <div className="student-page">
+      <div className="flex justify-end"><button className="btn-secondary" onClick={() => refetch()}>Refresh</button></div>
 
       {isLoading ? (
-        <div className="space-y-6 animate-pulse">
-          <div className="grid grid-cols-2 gap-6">
-            <div className="h-56 bg-white/[0.08] rounded-xl" />
-            <div className="h-56 bg-white/[0.08] rounded-xl" />
-          </div>
-          <div className="h-64 bg-white/[0.08] rounded-xl" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div className="student-shell h-56" /><div className="student-shell h-56" />
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="card">
-              <h2 className="font-semibold text-[#f0f4ff] mb-4">GPA Trend</h2>
-              <GpaTrendChart data={records} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div className="student-shell">
+              <div className="student-shell-accent" />
+              <div className="student-shell-head"><div className="student-shell-title">GPA Trend</div></div>
+              <div className="p-5"><GpaTrendChart data={records} /></div>
             </div>
-            <div className="card">
-              <h2 className="font-semibold text-[#f0f4ff] mb-4">Attendance Trend</h2>
-              <AttendanceChart data={records} />
+            <div className="student-shell">
+              <div className="student-shell-accent" />
+              <div className="student-shell-head"><div className="student-shell-title">Attendance Trend</div></div>
+              <div className="p-5"><AttendanceChart data={records} /></div>
             </div>
           </div>
-          <div className="card">
-            <h2 className="font-semibold text-[#f0f4ff] mb-4">Detailed Records</h2>
-            <DataTable columns={COLUMNS} data={records} pageSize={10} />
+
+          <div className="student-shell">
+            <div className="student-shell-accent" />
+            <div className="student-shell-head"><div className="student-shell-title">Detailed Records</div></div>
+            <div className="p-4"><DataTable columns={COLUMNS} data={records} pageSize={10} /></div>
           </div>
         </>
       )}

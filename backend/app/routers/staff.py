@@ -42,7 +42,21 @@ async def staff_dashboard(
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = StaffUser,
 ):
-    staff = await _get_staff_profile(db, current_user.id)
+    staff_result = await db.execute(
+        select(StaffProfile).where(StaffProfile.user_id == current_user.id)
+    )
+    staff = staff_result.scalar_one_or_none()
+    if not staff:
+        return {
+            "kpis": {
+                "total_students": 0,
+                "high_risk_count": 0,
+                "open_interventions": 0,
+                "closed_this_month": 0,
+            },
+            "risk_distribution": {"Low": 0, "Medium": 0, "High": 0},
+            "recent_risk_changes": [],
+        }
 
     students_result = await db.execute(
         select(Student).where(Student.department_id == staff.department_id)
@@ -165,6 +179,22 @@ async def list_staff_students(
         )
         perf = latest_perf.scalar_one_or_none()
 
+        latest_intervention_result = await db.execute(
+            select(Intervention)
+            .where(Intervention.student_id == s.id)
+            .order_by(desc(Intervention.created_at))
+            .limit(1)
+        )
+        latest_intervention = latest_intervention_result.scalar_one_or_none()
+
+        open_interventions_result = await db.execute(
+            select(func.count(Intervention.id)).where(
+                Intervention.student_id == s.id,
+                Intervention.status.in_(["open", "in_progress"]),
+            )
+        )
+        open_interventions = open_interventions_result.scalar() or 0
+
         items.append({
             "id": s.id,
             "name": u.name,
@@ -177,6 +207,12 @@ async def list_staff_students(
             "risk_level": pred.risk_level if pred else None,
             "confidence": pred.confidence if pred else None,
             "placement_eligible": pred.placement_eligible if pred else None,
+            "open_interventions": open_interventions,
+            "latest_intervention_type": latest_intervention.type if latest_intervention else None,
+            "latest_intervention_status": latest_intervention.status if latest_intervention else None,
+            "latest_intervention_at": (
+                latest_intervention.created_at.isoformat() if latest_intervention and latest_intervention.created_at else None
+            ),
         })
 
     return {"items": items, "total": total_count, "page": page, "size": size}
@@ -218,15 +254,13 @@ async def get_student_detail(
     interventions = int_result.scalars().all()
 
     return {
-        "student": {
-            "id": s.id,
-            "name": u.name,
-            "email": u.email,
-            "student_code": s.student_code,
-            "department": d.name,
-            "department_id": d.id,
-            "batch_year": s.batch_year,
-        },
+        "id": s.id,
+        "name": u.name,
+        "email": u.email,
+        "student_code": s.student_code,
+        "department_name": d.name,
+        "department_id": d.id,
+        "batch_year": s.batch_year,
         "latest_prediction": {
             "risk_level": pred.risk_level,
             "confidence": pred.confidence,
@@ -239,6 +273,14 @@ async def get_student_detail(
             "prob_high": pred.prob_high,
             "predicted_at": pred.predicted_at.isoformat() if pred.predicted_at else None,
         } if pred else None,
+        "latest_performance": {
+            "id": perfs[0].id if perfs else None,
+            "gpa": perfs[0].gpa if perfs else None,
+            "attendance_pct": perfs[0].attendance_pct if perfs else None,
+            "reward_points": perfs[0].reward_points if perfs else None,
+            "activity_points": perfs[0].activity_points if perfs else None,
+            "recorded_at": perfs[0].recorded_at.isoformat() if perfs and perfs[0].recorded_at else None,
+        } if perfs else None,
         "performance_history": [
             {
                 "id": p.id,
@@ -257,6 +299,7 @@ async def get_student_detail(
                 "type": i.type,
                 "description": i.description,
                 "status": i.status,
+                "closed_at": i.closed_at.isoformat() if i.closed_at else None,
                 "created_at": i.created_at.isoformat() if i.created_at else None,
             }
             for i in interventions
@@ -427,6 +470,45 @@ async def update_intervention(
 
 @router.get("/students/{student_id}/recommendations")
 async def get_student_recommendations(
+    student_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = StaffUser,
+):
+    staff = await _get_staff_profile(db, current_user.id)
+
+    st_result = await db.execute(
+        select(Student).where(
+            Student.id == student_id,
+            Student.department_id == staff.department_id,
+        )
+    )
+    student = st_result.scalar_one_or_none()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not in your dept")
+
+    result = await db.execute(
+        select(Recommendation)
+        .where(Recommendation.student_id == student_id)
+        .order_by(desc(Recommendation.generated_at))
+        .limit(4)
+    )
+    recs = result.scalars().all()
+
+    return {
+        "recommendations": [
+            {
+                "id": rec.id,
+                "content": rec.content,
+                "generated_at": rec.generated_at.isoformat() if rec.generated_at else None,
+                "model_used": rec.model_used,
+            }
+            for rec in recs
+        ]
+    }
+
+
+@router.post("/students/{student_id}/recommendations/generate")
+async def generate_student_recommendation(
     student_id: int,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = StaffUser,

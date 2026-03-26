@@ -31,6 +31,7 @@ import StudentDashboard from './pages/student/Dashboard'
 import StudentPerformance from './pages/student/Performance'
 import StudentWhatIf from './pages/student/WhatIf'
 import StudentRecommendations from './pages/student/Recommendations'
+import StudentInterventions from './pages/student/Interventions'
 
 const PAGE_TITLES = {
   '/admin/dashboard': 'Dashboard',
@@ -45,6 +46,7 @@ const PAGE_TITLES = {
   '/staff/upload': 'Upload Data',
   '/student/dashboard': 'My Dashboard',
   '/student/performance': 'My Performance',
+  '/student/interventions': 'My Interventions',
   '/student/what-if': 'What-If Analysis',
   '/student/recommendations': 'AI Recommendations',
 }
@@ -62,6 +64,7 @@ const PAGE_SUBS = {
   '/staff/upload': 'Upload Records',
   '/student/dashboard': 'Your Overview',
   '/student/performance': 'Academic Metrics',
+  '/student/interventions': 'Support Plan Tracking',
   '/student/what-if': 'Simulate Changes',
   '/student/recommendations': 'AI Insights',
 }
@@ -72,8 +75,10 @@ const AppLayout = ({ children, pagePath }) => {
 
   if (!isAuthenticated) return children
 
+  const portal = pagePath?.startsWith('/staff') ? 'staff' : pagePath?.startsWith('/student') ? 'student' : 'admin'
+
   return (
-    <div className="flex min-h-screen" style={{ background: 'var(--bg)' }}>
+    <div className="flex min-h-screen" style={{ background: 'var(--bg)' }} data-portal={portal}>
       <Sidebar
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
@@ -205,6 +210,14 @@ const App = () => {
           element={
             <PrivateRoute allowedRoles={['student']}>
               <AppLayout pagePath="/student/performance"><StudentPerformance /></AppLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/student/interventions"
+          element={
+            <PrivateRoute allowedRoles={['student']}>
+              <AppLayout pagePath="/student/interventions"><StudentInterventions /></AppLayout>
             </PrivateRoute>
           }
         />

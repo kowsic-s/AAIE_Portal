@@ -1,134 +1,125 @@
-import { useState } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useInterventions, useUpdateIntervention } from '../../hooks/useIntervention'
-import DataTable from '../../components/DataTable'
-import { formatDate } from '../../utils/formatters'
+import { useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useInterventions, useUpdateIntervention } from '../../hooks/useIntervention'
+import { formatDate } from '../../utils/formatters'
 
-const STATUS_OPTIONS = ['Scheduled', 'In Progress', 'Completed', 'Cancelled']
-const FILTER_OPTIONS = ['', ...STATUS_OPTIONS]
-
-const COLUMNS = [
-  { key: 'student_name', label: 'Student' },
-  { key: 'type', label: 'Type' },
-  { key: 'description', label: 'Description' },
-  {
-    key: 'status',
-    label: 'Status',
-    render: (v) => (
-      <span className={`badge text-xs ${
-        v === 'Completed' ? 'badge-green' :
-        v === 'Cancelled' ? 'badge-red' :
-        v === 'In Progress' ? 'badge-blue' : 'badge-gray'
-      }`}>{v}</span>
-    ),
-  },
-  { key: 'scheduled_date', label: 'Scheduled', render: (v) => formatDate(v) },
+const FILTERS = [
+  { value: '', label: 'All' },
+  { value: 'open', label: 'Open' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'closed', label: 'Closed' },
 ]
+
+const badgeClass = (status) => {
+  if (status === 'closed') return 'badge-green'
+  if (status === 'in_progress') return 'badge-blue'
+  return 'badge-amber'
+}
+
+const toLabel = (status) => status === 'in_progress' ? 'In Progress' : status === 'closed' ? 'Closed' : 'Open'
 
 const StaffInterventions = () => {
   const qc = useQueryClient()
   const [statusFilter, setStatusFilter] = useState('')
-  const [editingInt, setEditingInt] = useState(null)
-  const [newStatus, setNewStatus] = useState('')
-  const [notes, setNotes] = useState('')
+  const [search, setSearch] = useState('')
+  const [editing, setEditing] = useState(null)
+  const [nextStatus, setNextStatus] = useState('open')
 
   const { interventions, isLoading } = useInterventions({ status: statusFilter || undefined })
   const updateMut = useUpdateIntervention()
 
-  const handleUpdate = () => {
-    if (!editingInt) return
+  const filtered = useMemo(() => {
+    if (!search.trim()) return interventions
+    const q = search.toLowerCase()
+    return interventions.filter((i) => (i.student_name || '').toLowerCase().includes(q) || (i.type || '').toLowerCase().includes(q) || (i.description || '').toLowerCase().includes(q))
+  }, [interventions, search])
+
+  const onSave = () => {
+    if (!editing) return
     updateMut.mutate(
-      { interventionId: editingInt.id, payload: { status: newStatus, notes } },
-      { onSuccess: () => { setEditingInt(null); qc.invalidateQueries({ queryKey: ['interventions'] }) } }
+      { interventionId: editing.id, payload: { status: nextStatus } },
+      {
+        onSuccess: () => {
+          setEditing(null)
+          qc.invalidateQueries({ queryKey: ['interventions'] })
+          qc.invalidateQueries({ queryKey: ['staff-dashboard'] })
+          qc.invalidateQueries({ queryKey: ['students'] })
+        },
+      }
     )
   }
 
-  const rowActions = (row) => (
-    <button
-      className="btn-sm btn-ghost text-[#3b82f6]"
-      onClick={() => { setEditingInt(row); setNewStatus(row.status); setNotes(row.notes ?? '') }}
-    >
-      Update Status
-    </button>
-  )
-
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-[#f0f4ff]">Interventions</h1>
-        <p className="text-[#94a3b8] mt-1">Track and manage interventions</p>
-      </div>
-
-      <div className="flex gap-2 flex-wrap">
-        {FILTER_OPTIONS.map((s) => (
-          <button
-            key={s}
-            onClick={() => setStatusFilter(s)}
-            className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors ${
-              statusFilter === s ? 'bg-[#3b82f6] text-white border-[#3b82f6]' : 'text-[#94a3b8] border-white/10 hover:border-[#3b82f6]/40 bg-white/[0.05]'
-            }`}
-          >
-            {s || 'All'}
-          </button>
+    <div className="staff-page">
+      <div className="staff-filter-row">
+        {FILTERS.map((f) => (
+          <button key={f.label} className={`staff-filter-pill ${statusFilter === f.value ? 'active' : ''}`} onClick={() => setStatusFilter(f.value)}>{f.label}</button>
         ))}
       </div>
 
-      <div className="card">
-        <DataTable
-          columns={[...COLUMNS, { key: '_actions', label: '', render: (_, row) => rowActions(row) }]}
-          data={interventions}
-          loading={isLoading}
-        />
+      <div className="staff-shell">
+        <div className="staff-shell-accent" />
+        <div className="staff-shell-head">
+          <div className="relative min-w-[220px] flex-1 max-w-[320px]">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input className="input-field pl-9" placeholder="Search interventions..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+          <span className="text-sm" style={{ color: 'var(--text-3)' }}>{filtered.length} results</span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                {['Student', 'Type', 'Description', 'Status', 'Created', 'Closed', ''].map((h) => (
+                  <th key={h} className="px-4 py-3 text-left text-[0.68rem] font-bold uppercase tracking-wider" style={{ color: 'var(--text-3)', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr><td colSpan={7} className="px-4 py-6" style={{ color: 'var(--text-3)' }}>Loading...</td></tr>
+              ) : filtered.length === 0 ? (
+                <tr><td colSpan={7} className="px-4 py-6" style={{ color: 'var(--text-3)' }}>No interventions found.</td></tr>
+              ) : filtered.map((i) => (
+                <tr key={i.id} className="transition-colors hover:bg-[var(--surface-2)]">
+                  <td className="px-4 py-3" style={{ color: 'var(--text-1)', borderBottom: '1px solid var(--border)' }}>{i.student_name}</td>
+                  <td className="px-4 py-3" style={{ color: 'var(--text-2)', borderBottom: '1px solid var(--border)' }}>{String(i.type || '').replace(/_/g, ' ')}</td>
+                  <td className="px-4 py-3" style={{ color: 'var(--text-2)', borderBottom: '1px solid var(--border)' }}>{i.description}</td>
+                  <td className="px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+                    <span className={`badge ${badgeClass(i.status)}`}>{toLabel(i.status)}</span>
+                  </td>
+                  <td className="px-4 py-3" style={{ color: 'var(--text-3)', borderBottom: '1px solid var(--border)' }}>{formatDate(i.created_at)}</td>
+                  <td className="px-4 py-3" style={{ color: 'var(--text-3)', borderBottom: '1px solid var(--border)' }}>{i.closed_at ? formatDate(i.closed_at) : '—'}</td>
+                  <td className="px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+                    <button className="btn-secondary text-xs" onClick={() => { setEditing(i); setNextStatus(i.status || 'open') }}>Update</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <AnimatePresence>
-        {editingInt && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="rounded-2xl w-full max-w-md p-6 border border-white/10"
-              style={{ background: 'rgba(15,23,42,0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
-            >
+        {editing && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'color-mix(in srgb, var(--bg) 72%, #000 28%)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-md rounded-2xl p-6" style={{ background: 'var(--surface-3)', border: '1px solid var(--border)', boxShadow: 'var(--shadow), var(--inset)' }}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-[#f0f4ff]">Update Intervention</h2>
-                <button onClick={() => setEditingInt(null)} className="text-[#475569] hover:text-[#f0f4ff] text-xl transition-colors">×</button>
+                <h3 className="staff-shell-title">Update Intervention</h3>
+                <button onClick={() => setEditing(null)} className="text-xl" style={{ color: 'var(--text-3)' }}>×</button>
               </div>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-[#94a3b8] mb-1"><span className="font-medium">Student:</span> {editingInt.student_name}</p>
-                  <p className="text-sm text-[#94a3b8]"><span className="font-medium">Type:</span> {editingInt.type}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#94a3b8] mb-1">Status</label>
-                  <select
-                    className="input-field"
-                    value={newStatus}
-                    onChange={(e) => setNewStatus(e.target.value)}
-                  >
-                    {STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#94a3b8] mb-1">Notes</label>
-                  <textarea
-                    className="input-field min-h-[80px]"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                  />
-                </div>
-                <div className="flex gap-3 pt-2">
-                  <button
-                    className="btn-primary flex-1"
-                    onClick={handleUpdate}
-                    disabled={updateMut.isPending}
-                  >
-                    {updateMut.isPending ? 'Saving...' : 'Save'}
-                  </button>
-                  <button className="btn-secondary flex-1" onClick={() => setEditingInt(null)}>Cancel</button>
-                </div>
+              <p className="text-sm mb-2" style={{ color: 'var(--text-2)' }}>{editing.student_name}</p>
+              <select className="input-field mb-4" value={nextStatus} onChange={(e) => setNextStatus(e.target.value)}>
+                <option value="open">Open</option>
+                <option value="in_progress">In Progress</option>
+                <option value="closed">Closed</option>
+              </select>
+              <div className="flex gap-2">
+                <button className="btn-primary flex-1" onClick={onSave} disabled={updateMut.isPending}>{updateMut.isPending ? 'Saving...' : 'Save'}</button>
+                <button className="btn-secondary flex-1" onClick={() => setEditing(null)}>Cancel</button>
               </div>
             </motion.div>
           </div>

@@ -25,6 +25,7 @@ const staffLinks = [
 const studentLinks = [
   { to: '/student/dashboard', label: 'Dashboard', section: 'Overview', icon: <I><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></I> },
   { to: '/student/performance', label: 'Performance', section: 'Academics', icon: <I><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></I> },
+  { to: '/student/interventions', label: 'Interventions', section: 'Academics', icon: <I><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><path d="M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></I> },
   { to: '/student/what-if', label: 'What-If Analysis', section: 'Academics', icon: <I><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></I> },
   { to: '/student/recommendations', label: 'AI Recommendations', section: 'Academics', icon: <I><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></I> },
 ]
@@ -72,6 +73,12 @@ const Sidebar = ({ mobileOpen, onMobileClose }) => {
             </svg>
           </div>
           <span className="font-display text-base font-extrabold tracking-tight" style={{ color: 'var(--text-1)' }}>AAIE</span>
+          {user?.role === 'staff' && (
+            <span className="ml-auto text-[0.6rem] font-display font-bold uppercase tracking-[0.08em] px-2 py-[3px] rounded-full"
+              style={{ background: 'rgba(34,211,238,0.12)', border: '1px solid rgba(34,211,238,0.2)', color: 'var(--accent)' }}>
+              Staff
+            </span>
+          )}
         </div>
 
         {/* Nav */}

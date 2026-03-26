@@ -27,6 +27,10 @@ BASE_DIR = Path(__file__).parent / "models"
 BASE_DIR.mkdir(parents=True, exist_ok=True)
 REGISTRY_PATH = BASE_DIR / "registry.json"
 
+# Backward-compatible aliases used by tests/integrations.
+MODELS_DIR = BASE_DIR
+REGISTRY_FILE = REGISTRY_PATH
+
 FEATURE_NAMES = ["attendance_pct", "gpa", "reward_points", "activity_points"]
 RISK_LABELS = ["Low", "Medium", "High"]
 
@@ -36,7 +40,7 @@ RISK_LABELS = ["Low", "Medium", "High"]
 # ──────────────────────────────────────────────────────────────────────────────
 class ModelRegistry:
     def __init__(self):
-        self._path = REGISTRY_PATH
+        self._path = REGISTRY_FILE
         self._data: dict = self._load()
 
     def _load(self) -> dict:
@@ -83,6 +87,10 @@ class ModelRegistry:
 
     def get_version_metadata(self, version_id: str) -> Optional[dict]:
         return self._data["versions"].get(version_id)
+
+    # Backward-compatible helper expected by tests.
+    def get_version(self, version_id: str) -> Optional[dict]:
+        return self.get_version_metadata(version_id)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -167,7 +175,7 @@ class ModelTrainer:
             winner_acc = dt_acc
 
         version_id = f"{model_type}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
-        artifact_path = str(BASE_DIR / f"{version_id}.joblib")
+        artifact_path = str(MODELS_DIR / f"{version_id}.joblib")
 
         bundle = {
             "model": winner,
@@ -208,10 +216,20 @@ class RiskPredictor:
         self._registry = registry
         self._placement_gpa_floor = 6.0
         self._placement_attendance_floor = 75.0
+        self._placement_reward_floor = 30.0
+        self._placement_activity_floor = 20.0
 
-    def update_thresholds(self, gpa_floor: float, attendance_floor: float) -> None:
+    def update_thresholds(
+        self,
+        gpa_floor: float,
+        attendance_floor: float,
+        reward_floor: float,
+        activity_floor: float,
+    ) -> None:
         self._placement_gpa_floor = gpa_floor
         self._placement_attendance_floor = attendance_floor
+        self._placement_reward_floor = reward_floor
+        self._placement_activity_floor = activity_floor
 
     def predict(self, student_id: int, features_dict: dict) -> dict:
         bundle = self._manager.get_model()
@@ -249,9 +267,13 @@ class RiskPredictor:
         # Placement eligibility
         gpa = features_dict.get("gpa", 0)
         attendance = features_dict.get("attendance_pct", 0)
+        reward_points = features_dict.get("reward_points", 0)
+        activity_points = features_dict.get("activity_points", 0)
         placement_eligible = (
             gpa >= self._placement_gpa_floor
             and attendance >= self._placement_attendance_floor
+            and reward_points >= self._placement_reward_floor
+            and activity_points >= self._placement_activity_floor
             and risk_level != "High"
         )
 
@@ -339,6 +361,14 @@ class AcademicInsightEngine:
     def predict_batch(self, students: list[dict]) -> list[dict]:
         return self.predictor.predict_batch(students)
 
+    # Backward-compatible simulation helper used in tests.
+    def simulate(self, student_id: int, current: dict, changes: dict) -> dict:
+        merged = {**current, **changes}
+        return {
+            "current": self.predict(student_id, current),
+            "simulated": self.predict(student_id, merged),
+        }
+
     def promote(self, version_id: str) -> None:
         self.registry.promote(version_id)
         # Force model hot-reload
@@ -350,8 +380,19 @@ class AcademicInsightEngine:
     def list_versions(self) -> list[dict]:
         return self.registry.list_versions()
 
-    def update_thresholds(self, gpa_floor: float, attendance_floor: float) -> None:
-        self.predictor.update_thresholds(gpa_floor, attendance_floor)
+    def update_thresholds(
+        self,
+        gpa_floor: float,
+        attendance_floor: float,
+        reward_floor: float,
+        activity_floor: float,
+    ) -> None:
+        self.predictor.update_thresholds(
+            gpa_floor,
+            attendance_floor,
+            reward_floor,
+            activity_floor,
+        )
 
     def is_ready(self) -> bool:
         return self.registry.get_active_version() is not None

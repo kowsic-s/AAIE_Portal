@@ -1,29 +1,82 @@
 """Gemini AI service for generating personalised academic recommendations."""
 
+import asyncio
 import logging
+import os
 from typing import Optional
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
-settings = get_settings()
 
 
 class GeminiService:
     def __init__(self):
         self._client = None
-        self._model_name = settings.GEMINI_MODEL
+        self._model_name = get_settings().GEMINI_MODEL
         self._init_client()
 
     def _init_client(self) -> None:
-        if not settings.GEMINI_API_KEY:
+        # Refresh .env values for long-running dev processes where env keys can change.
+        try:
+            from dotenv import load_dotenv
+            load_dotenv(override=True)
+        except Exception:
+            pass
+
+        settings = get_settings()
+        api_key = (
+            os.getenv("GEMINI_API_KEY")
+            or os.getenv("GOOGLE_API_KEY")
+            or settings.GEMINI_API_KEY
+        )
+        if api_key:
+            api_key = api_key.strip()
+
+        env_model = os.getenv("GEMINI_MODEL")
+        if env_model and env_model.strip():
+            self._model_name = env_model.strip()
+
+        if not api_key:
             logger.warning("GEMINI_API_KEY not set — Gemini recommendations will be unavailable")
             return
         try:
             import google.generativeai as genai
-            genai.configure(api_key=settings.GEMINI_API_KEY)
+            genai.configure(api_key=api_key)
+
+            configured = (self._model_name or settings.GEMINI_MODEL or "gemini-2.5-flash").replace("models/", "")
+            fallback_candidates = [
+                configured,
+                "gemini-2.5-flash",
+                "gemini-2.0-flash",
+                "gemini-flash-latest",
+                "gemini-pro-latest",
+            ]
+
+            selected = configured
+            try:
+                available = {
+                    m.name.replace("models/", "")
+                    for m in genai.list_models()
+                    if "generateContent" in (m.supported_generation_methods or [])
+                }
+                for candidate in fallback_candidates:
+                    if candidate in available:
+                        selected = candidate
+                        break
+                if selected != configured:
+                    logger.warning(
+                        "Configured Gemini model '%s' unavailable; using '%s'",
+                        configured,
+                        selected,
+                    )
+            except Exception as list_err:
+                logger.warning("Could not list Gemini models, using configured model '%s': %s", configured, list_err)
+
+            self._model_name = selected
             self._client = genai.GenerativeModel(self._model_name)
             logger.info(f"Gemini client initialised: {self._model_name}")
         except Exception as e:
+            self._client = None
             logger.error(f"Failed to init Gemini client: {e}")
 
     def _build_prompt(
@@ -56,14 +109,44 @@ class GeminiService:
         risk_level: str,
     ) -> Optional[str]:
         if self._client is None:
+            self._init_client()
+        if self._client is None:
+            logger.warning("Using fallback recommendation because Gemini client is unavailable")
             return self._fallback_recommendation(attendance_pct, gpa, risk_level)
 
         prompt = self._build_prompt(attendance_pct, gpa, reward_points, activity_points, risk_level)
         try:
-            response = self._client.generate_content(prompt)
-            return response.text
+            loop = asyncio.get_running_loop()
+            response = await loop.run_in_executor(None, lambda: self._client.generate_content(prompt))
+
+            text = getattr(response, "text", None)
+            if text:
+                return text
+
+            # Older/newer SDK variants may not expose response.text directly.
+            candidates = getattr(response, "candidates", None) or []
+            if candidates:
+                parts = getattr(candidates[0].content, "parts", None) or []
+                joined = "\n".join(getattr(p, "text", "") for p in parts).strip()
+                if joined:
+                    return joined
+
+            logger.warning("Gemini returned empty content; using fallback recommendation")
+            return self._fallback_recommendation(attendance_pct, gpa, risk_level)
         except Exception as e:
             logger.error(f"Gemini generation failed: {e}")
+            # Retry once in case credentials/model state changed during runtime.
+            self._client = None
+            self._init_client()
+            if self._client is not None:
+                try:
+                    loop = asyncio.get_running_loop()
+                    response = await loop.run_in_executor(None, lambda: self._client.generate_content(prompt))
+                    text = getattr(response, "text", None)
+                    if text:
+                        return text
+                except Exception as retry_err:
+                    logger.error(f"Gemini retry failed: {retry_err}")
             return self._fallback_recommendation(attendance_pct, gpa, risk_level)
 
     def _fallback_recommendation(self, attendance_pct: float, gpa: float, risk_level: str) -> str:

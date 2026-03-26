@@ -85,7 +85,7 @@ const AdminDepartments = () => {
                 depts.map((d, i) => {
                   const dc = deptColors[i % deptColors.length]
                   return (
-                    <tr key={d.id} className="transition-colors hover:bg-[rgba(255,255,255,0.02)]">
+                    <tr key={d.id} className="transition-colors hover:bg-[var(--surface-2)]">
                       <td className="px-5 py-3.5" style={{ borderBottom: '1px solid var(--border)' }}>
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[0.7rem] font-display font-bold flex-shrink-0"
@@ -137,7 +137,7 @@ const AdminDepartments = () => {
       <AnimatePresence>
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}>
+            style={{ background: 'color-mix(in srgb, var(--bg) 72%, #000 28%)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}>
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
               className="w-full max-w-[440px] overflow-hidden"
               style={{ background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.55)' }}>
@@ -150,7 +150,7 @@ const AdminDepartments = () => {
                 <div className="px-6 py-5 flex flex-col gap-3.5">
                   {formError && <p className="text-[0.8rem]" style={{ color: 'var(--risk-high)' }}>{formError}</p>}
                   <div>
-                    <label className="block text-[0.72rem] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-3)' }}>Code (e.g. CS)</label>
+                    <label className="block text-[0.72rem] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-3)' }}>Code</label>
                     <input className="input-field w-full" value={form.code} onChange={e => setForm(p => ({ ...p, code: e.target.value.toUpperCase() }))} required />
                   </div>
                   <div>
@@ -175,7 +175,7 @@ const AdminDepartments = () => {
 
         {showMentorModal && mentorDept && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}>
+            style={{ background: 'color-mix(in srgb, var(--bg) 72%, #000 28%)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}>
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
               className="w-full max-w-[440px] overflow-hidden"
               style={{ background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.55)' }}>

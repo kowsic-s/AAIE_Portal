@@ -4,10 +4,16 @@ import secrets
 import string
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, update
+from sqlalchemy import select, func, update, delete
 from app.models.user import User
 from app.models.student import Student
+from app.models.student import StaffStudent
 from app.models.staff_profile import StaffProfile
+from app.models.audit_log import AuditLog
+from app.models.intervention import Intervention
+from app.models.performance import PerformanceRecord
+from app.models.prediction import Prediction
+from app.models.recommendation import Recommendation
 from app.services.auth_service import hash_password
 
 
@@ -168,10 +174,57 @@ async def reset_user_password(db: AsyncSession, user_id: int) -> Optional[str]:
     return temp_password
 
 
-async def soft_delete_user(db: AsyncSession, user_id: int) -> bool:
+async def set_user_password(db: AsyncSession, user_id: int, new_password: str) -> bool:
     user = await get_user_by_id(db, user_id)
     if not user:
         return False
-    user.is_active = False
+    user.password_hash = hash_password(new_password)
+    await db.flush()
+    return True
+
+
+async def delete_user(db: AsyncSession, user_id: int) -> bool:
+    user = await get_user_by_id(db, user_id)
+    if not user:
+        return False
+
+    # Keep historical records while removing user account references.
+    await db.execute(
+        update(AuditLog).where(AuditLog.user_id == user_id).values(user_id=None)
+    )
+    await db.execute(
+        update(PerformanceRecord)
+        .where(PerformanceRecord.recorded_by == user_id)
+        .values(recorded_by=None)
+    )
+
+    student_result = await db.execute(select(Student).where(Student.user_id == user_id))
+    student_profile = student_result.scalar_one_or_none()
+    if student_profile:
+        await db.execute(
+            delete(Intervention).where(Intervention.student_id == student_profile.id)
+        )
+        await db.execute(
+            delete(Recommendation).where(Recommendation.student_id == student_profile.id)
+        )
+        await db.execute(delete(Prediction).where(Prediction.student_id == student_profile.id))
+        await db.execute(
+            delete(PerformanceRecord).where(PerformanceRecord.student_id == student_profile.id)
+        )
+        await db.execute(
+            delete(StaffStudent).where(StaffStudent.student_id == student_profile.id)
+        )
+        await db.execute(delete(Student).where(Student.id == student_profile.id))
+
+    staff_result = await db.execute(
+        select(StaffProfile).where(StaffProfile.user_id == user_id)
+    )
+    staff_profile = staff_result.scalar_one_or_none()
+    if staff_profile:
+        await db.execute(delete(Intervention).where(Intervention.staff_id == staff_profile.id))
+        await db.execute(delete(StaffStudent).where(StaffStudent.staff_id == staff_profile.id))
+        await db.execute(delete(StaffProfile).where(StaffProfile.id == staff_profile.id))
+
+    await db.execute(delete(User).where(User.id == user_id))
     await db.flush()
     return True

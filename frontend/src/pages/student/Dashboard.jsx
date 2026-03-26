@@ -1,117 +1,85 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { getStudentDashboard } from '../../api/student'
-import KpiCard from '../../components/KpiCard'
 import RiskBadge from '../../components/RiskBadge'
-import useAuthStore from '../../store/authStore'
-import { motion } from 'framer-motion'
+
+const QuickIcon = ({ kind }) => {
+  if (kind === 'performance') return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+  if (kind === 'interventions') return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><path d="M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2"/><path d="M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>
+  if (kind === 'whatif') return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3"/></svg>
+}
 
 const StudentDashboard = () => {
-  const user = useAuthStore((s) => s.user)
-
   const { data, isLoading, isError } = useQuery({
     queryKey: ['student-dashboard'],
     queryFn: getStudentDashboard,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
   })
 
-  if (isLoading) return <Skeleton />
-  if (isError) return <div className="text-[#ef4444] p-6">Failed to load dashboard.</div>
+  if (isLoading) return <div className="student-page"><div className="student-kpi-grid">{[1,2,3,4].map((i) => <div key={i} className="student-kpi h-28" />)}</div></div>
+  if (isError) return <div className="p-6" style={{ color: 'var(--risk-high)' }}>Failed to load dashboard.</div>
 
   const d = data?.data ?? {}
-  const pred = d.latest_prediction ?? {}
+  const pred = d.latest_prediction ?? d.prediction ?? {}
   const perf = d.latest_performance ?? {}
-  const student = d.student ?? {}
-
-  const riskMessages = {
-    Low: 'You are on track. Keep maintaining your excellent academic performance!',
-    Medium: 'You have areas to improve. Consider reaching out to your mentor for guidance.',
-    High: 'You need immediate support. Please contact your academic advisor as soon as possible.',
-  }
-
-  const riskColorMap = {
-    Low: { border: 'border-[rgba(16,185,129,0.3)]', bg: 'rgba(16,185,129,0.06)' },
-    Medium: { border: 'border-[rgba(245,158,11,0.3)]', bg: 'rgba(245,158,11,0.06)' },
-    High: { border: 'border-[rgba(239,68,68,0.3)]', bg: 'rgba(239,68,68,0.06)' },
-  }
-
-  const risk = pred.risk_level ?? 'Medium'
-  const rc = riskColorMap[risk] ?? riskColorMap.Medium
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-[#f0f4ff]">Hello, {user?.name?.split(' ')[0]} 👋</h1>
-        <p className="text-[#94a3b8] mt-1">Here's your academic overview</p>
-      </div>
-
-      {/* Risk Banner */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className={`card ${rc.border} border`}
-        style={{ background: rc.bg }}
-      >
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <p className="text-sm font-medium text-[#94a3b8] mb-1">Current Risk Level</p>
-            <RiskBadge level={risk} size="lg" />
-            <p className="text-[#94a3b8] mt-3 text-sm leading-relaxed">{riskMessages[risk] ?? riskMessages.Medium}</p>
+    <div className="student-page">
+      <div className="student-shell">
+        <div className="student-shell-accent" />
+        <div className="p-5 flex items-start justify-between gap-4" style={{ background: 'color-mix(in srgb, var(--accent) 7%, var(--surface))' }}>
+          <div>
+            <p className="text-sm font-semibold" style={{ color: 'var(--text-2)' }}>Current Risk Level</p>
+            <div className="mt-2"><RiskBadge level={pred.risk_level || 'Medium'} size="lg" /></div>
+            <p className="text-sm mt-3" style={{ color: 'var(--text-2)' }}>{pred.risk_message || 'Use recommendations and interventions to improve your trajectory.'}</p>
           </div>
-          <div className="text-right ml-4">
-            <p className="text-sm text-[#94a3b8]">Confidence</p>
-            <p className="text-2xl font-bold text-[#f0f4ff]">
-              {pred.confidence != null ? `${(pred.confidence * 100).toFixed(0)}%` : '—'}
-            </p>
+          <div className="text-right">
+            <p className="text-xs" style={{ color: 'var(--text-3)' }}>Confidence</p>
+            <p className="text-2xl font-bold" style={{ color: 'var(--text-1)' }}>{pred.confidence != null ? `${(pred.confidence * 100).toFixed(0)}%` : '—'}</p>
           </div>
         </div>
-      </motion.div>
+      </div>
 
-      {/* Placement Card */}
-      <div className={`card flex items-center gap-4 border ${pred.placement_eligible ? 'border-[rgba(16,185,129,0.3)]' : 'border-white/10'}`}
-        style={{ background: pred.placement_eligible ? 'rgba(16,185,129,0.06)' : undefined }}>
-        <div className="text-3xl">{pred.placement_eligible ? '✅' : '📋'}</div>
-        <div>
-          <p className="font-semibold text-[#f0f4ff]">Placement Eligibility</p>
-          <p className="text-sm text-[#94a3b8]">
-            {pred.placement_eligible
-              ? 'You are currently eligible for placement opportunities.'
-              : 'You do not meet placement eligibility criteria yet.'}
-          </p>
+      <div className="student-kpi-grid">
+        <div className="student-kpi">
+          <div className="student-kpi-top"><div className="student-kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div></div>
+          <div className="student-kpi-value">{perf.gpa != null ? Number(perf.gpa).toFixed(2) : '0.00'}</div>
+          <div className="student-kpi-label">GPA</div>
+        </div>
+        <div className="student-kpi">
+          <div className="student-kpi-top"><div className="student-kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div></div>
+          <div className="student-kpi-value">{perf.attendance_pct != null ? `${Number(perf.attendance_pct).toFixed(1)}%` : '0.0%'}</div>
+          <div className="student-kpi-label">Attendance</div>
+        </div>
+        <div className="student-kpi">
+          <div className="student-kpi-top"><div className="student-kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div></div>
+          <div className="student-kpi-value">{perf.reward_points ?? 0}</div>
+          <div className="student-kpi-label">Reward Points</div>
+        </div>
+        <div className="student-kpi">
+          <div className="student-kpi-top"><div className="student-kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div></div>
+          <div className="student-kpi-value">{perf.activity_points ?? 0}</div>
+          <div className="student-kpi-label">Activity Points</div>
         </div>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard label="GPA" value={perf.gpa ?? 0} icon="📊" color="blue" decimals={2} />
-        <KpiCard label="Attendance" value={perf.attendance_pct ?? 0} icon="📅" color="green" decimals={1} suffix="%" />
-        <KpiCard label="Reward Points" value={perf.reward_points ?? 0} icon="🏆" color="amber" />
-        <KpiCard label="Activity Points" value={perf.activity_points ?? 0} icon="⚡" color="purple" />
-      </div>
-
-      {/* Quick Links */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {[
-          { to: '/student/performance', icon: '📈', label: 'View Performance History' },
-          { to: '/student/what-if', icon: '🔮', label: 'What-If Simulator' },
-          { to: '/student/recommendations', icon: '✨', label: 'AI Recommendations' },
-        ].map((link) => (
-          <Link key={link.to} to={link.to} className="card hover:bg-white/[0.08] transition-all flex items-center gap-3 group">
-            <span className="text-2xl">{link.icon}</span>
-            <span className="font-medium text-[#94a3b8] group-hover:text-[#3b82f6] transition-colors">{link.label}</span>
+          { to: '/student/performance', label: 'View Performance History', kind: 'performance' },
+          { to: '/student/interventions', label: 'My Interventions', kind: 'interventions' },
+          { to: '/student/what-if', label: 'What-If Simulator', kind: 'whatif' },
+          { to: '/student/recommendations', label: 'AI Recommendations', kind: 'recommendations' },
+        ].map((x) => (
+          <Link key={x.to} to={x.to} className="student-shell p-4 flex items-center gap-3 hover:opacity-95" style={{ textDecoration: 'none' }}>
+            <div className="student-kpi-icon"><QuickIcon kind={x.kind} /></div>
+            <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>{x.label}</span>
           </Link>
         ))}
       </div>
     </div>
   )
 }
-
-const Skeleton = () => (
-  <div className="space-y-6 animate-pulse">
-    <div className="h-8 bg-white/[0.08] rounded w-48" />
-    <div className="h-28 bg-white/[0.08] rounded-xl" />
-    <div className="grid grid-cols-4 gap-4">{[1,2,3,4].map(i=><div key={i} className="h-24 bg-white/[0.08] rounded-xl" />)}</div>
-  </div>
-)
 
 export default StudentDashboard

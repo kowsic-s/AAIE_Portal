@@ -47,6 +47,8 @@ async def run_prediction_for_student(
     engine.update_thresholds(
         sys_settings.placement_gpa_floor,
         sys_settings.placement_attendance_floor,
+        sys_settings.placement_reward_floor,
+        sys_settings.placement_activity_floor,
     )
 
     features = {

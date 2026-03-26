@@ -56,3 +56,14 @@ class UserListResponse(BaseModel):
     page: int
     size: int
     pages: int
+
+
+class AdminSetPassword(BaseModel):
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def password_strength(cls, v: str) -> str:
+        if len(v) < 6:
+            raise ValueError("Password must be at least 6 characters")
+        return v

@@ -25,7 +25,7 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
-      style={{ background: 'linear-gradient(135deg, #0a0f1e 0%, #0d1b2e 50%, #0a0f1e 100%)' }}>
+      style={{ background: 'linear-gradient(135deg, var(--bg) 0%, var(--bg-2) 55%, var(--bg-3) 100%)' }}>
       {/* Background orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] rounded-full opacity-20 animate-float1" style={{ background: 'radial-gradient(circle, #3b82f6 0%, transparent 70%)', filter: 'blur(120px)' }} />
@@ -52,8 +52,8 @@ const LoginPage = () => {
         </div>
 
         {/* Card */}
-        <div className="rounded-2xl p-8 border border-white/10"
-          style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)' }}>
+        <div className="rounded-2xl p-8 border"
+          style={{ background: 'var(--surface)', borderColor: 'var(--border)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: 'var(--shadow), var(--inset)' }}>
           <h2 className="text-xl font-semibold text-[#f0f4ff] mb-6">Sign in to your account</h2>
 
           {errorMsg && (

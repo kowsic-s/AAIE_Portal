@@ -3,9 +3,9 @@ import { useState, useMemo, useEffect } from 'react'
 const Skeleton = ({ rows = 5, cols = 4 }) => (
   <div className="animate-pulse">
     {Array.from({ length: rows }).map((_, i) => (
-      <div key={i} className="flex gap-4 py-3 border-b border-white/[0.06]">
+      <div key={i} className="flex gap-4 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
         {Array.from({ length: cols }).map((_, j) => (
-          <div key={j} className="h-4 bg-white/[0.08] rounded flex-1" />
+          <div key={j} className="h-4 rounded flex-1" style={{ background: 'var(--surface-2)' }} />
         ))}
       </div>
     ))}
@@ -73,7 +73,7 @@ const DataTable = ({
       {searchable && (
         <div className="flex items-center gap-2">
           <div className="relative flex-1 max-w-sm">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#475569]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-3)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
@@ -81,27 +81,33 @@ const DataTable = ({
               placeholder="Search..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-              className="pl-9 pr-3 py-2 rounded-xl text-sm w-full text-[#f0f4ff] placeholder-[#475569] border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#3b82f6]/40 focus:border-[#3b82f6]/50 transition-all"
-              style={{ background: 'rgba(255,255,255,0.05)' }}
+              className="pl-9 pr-3 py-2 rounded-xl text-sm w-full border focus:outline-none focus:ring-2 transition-all"
+              style={{
+                color: 'var(--text-1)',
+                borderColor: 'var(--border)',
+                background: 'var(--surface-2)',
+                boxShadow: 'none',
+              }}
             />
           </div>
-          <span className="text-sm text-[#94a3b8]">{filtered.length} results</span>
+          <span className="text-sm" style={{ color: 'var(--text-2)' }}>{filtered.length} results</span>
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-2xl border border-white/10" style={{ background: 'rgba(255,255,255,0.03)' }}>
-        <table className="min-w-full divide-y divide-white/[0.06]">
+      <div className="overflow-x-auto rounded-2xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+        <table className="min-w-full divide-y" style={{ borderColor: 'var(--border)' }}>
           <thead>
-            <tr style={{ background: 'rgba(255,255,255,0.04)' }}>
+            <tr style={{ background: 'var(--surface-2)' }}>
               {columns.map((col) => {
                 const field = col.accessor ?? col.key
                 return (
                   <th
                     key={field ?? col.label}
                     onClick={() => field && handleSort(field)}
-                    className={`px-4 py-3 text-left text-xs font-semibold text-[#94a3b8] uppercase tracking-wider select-none ${
-                      field && sortable ? 'cursor-pointer hover:text-[#f0f4ff]' : ''
+                    className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider select-none ${
+                      field && sortable ? 'cursor-pointer' : ''
                     }`}
+                    style={{ color: 'var(--text-2)' }}
                   >
                     <span className="flex items-center gap-1">
                       {col.label ?? col.header}
@@ -114,7 +120,7 @@ const DataTable = ({
               })}
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/[0.06]">
+          <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>
             {loading ? (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-4">
@@ -125,10 +131,10 @@ const DataTable = ({
               <tr>
                 <td colSpan={columns.length} className="px-4 py-16 text-center">
                   <div className="flex flex-col items-center gap-2">
-                    <svg className="w-10 h-10 text-[#475569]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-10 h-10" style={{ color: 'var(--text-3)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
-                    <p className="text-[#475569] text-sm font-medium">No data found</p>
+                    <p className="text-sm font-medium" style={{ color: 'var(--text-3)' }}>No data found</p>
                   </div>
                 </td>
               </tr>
@@ -137,13 +143,16 @@ const DataTable = ({
                 <tr
                   key={row.id ?? i}
                   onClick={() => onRowClick?.(row)}
-                  className={`transition-colors ${onRowClick ? 'cursor-pointer hover:bg-white/[0.06]' : 'hover:bg-white/[0.04]'}`}
+                  className={`transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                  style={{ background: 'transparent' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-2)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
                 >
                   {columns.map((col) => {
                     const field = col.accessor ?? col.key
                     const value = field ? row[field] : undefined
                     return (
-                      <td key={field ?? col.label} className="px-4 py-3 text-sm text-[#94a3b8] whitespace-nowrap">
+                      <td key={field ?? col.label} className="px-4 py-3 text-sm whitespace-nowrap" style={{ color: 'var(--text-2)' }}>
                         {col.render ? col.render(value, row) : (value ?? null)}
                       </td>
                     )
@@ -156,20 +165,22 @@ const DataTable = ({
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm text-[#94a3b8]">
+        <div className="flex items-center justify-between text-sm" style={{ color: 'var(--text-2)' }}>
           <span>Page {page} of {totalPages}</span>
           <div className="flex gap-2">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-3 py-1 rounded-lg border border-white/10 disabled:opacity-40 hover:bg-white/[0.06] text-[#94a3b8] transition-colors"
+              className="px-3 py-1 rounded-lg border disabled:opacity-40 transition-colors"
+              style={{ borderColor: 'var(--border)', color: 'var(--text-2)', background: 'var(--surface)' }}
             >
               Previous
             </button>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="px-3 py-1 rounded-lg border border-white/10 disabled:opacity-40 hover:bg-white/[0.06] text-[#94a3b8] transition-colors"
+              className="px-3 py-1 rounded-lg border disabled:opacity-40 transition-colors"
+              style={{ borderColor: 'var(--border)', color: 'var(--text-2)', background: 'var(--surface)' }}
             >
               Next
             </button>

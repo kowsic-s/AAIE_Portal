@@ -95,6 +95,16 @@ const AdminSettings = () => {
                 <input type="number" className="input-field w-full" min={0} max={100} step={1}
                   value={form.placement_attendance_floor ?? ''} onChange={e => setForm(p => ({ ...p, placement_attendance_floor: parseFloat(e.target.value) }))} />
               </div>
+              <div>
+                <label className="block text-[0.72rem] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-3)' }}>Min Reward Pts</label>
+                <input type="number" className="input-field w-full" min={0} max={500} step={1}
+                  value={form.placement_reward_floor ?? ''} onChange={e => setForm(p => ({ ...p, placement_reward_floor: parseFloat(e.target.value) }))} />
+              </div>
+              <div>
+                <label className="block text-[0.72rem] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-3)' }}>Min Activity Pts</label>
+                <input type="number" className="input-field w-full" min={0} max={500} step={1}
+                  value={form.placement_activity_floor ?? ''} onChange={e => setForm(p => ({ ...p, placement_activity_floor: parseFloat(e.target.value) }))} />
+              </div>
             </div>
           </div>
         </div>

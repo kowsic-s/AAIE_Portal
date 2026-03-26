@@ -34,4 +34,6 @@ class SystemSettings(Base):
     activity_weight = Column(Float, default=0.10, nullable=False)
     placement_gpa_floor = Column(Float, default=6.0, nullable=False)
     placement_attendance_floor = Column(Float, default=75.0, nullable=False)
+    placement_reward_floor = Column(Float, default=30.0, nullable=False)
+    placement_activity_floor = Column(Float, default=20.0, nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)

@@ -79,6 +79,16 @@ async def student_dashboard(
             "risk_message": risk_message.get(pred.risk_level, ""),
             "predicted_at": pred.predicted_at.isoformat() if pred.predicted_at else None,
         } if pred else None,
+        # Backward-compatible alias used by some portal views.
+        "latest_prediction": {
+            "risk_level": pred.risk_level,
+            "confidence": pred.confidence,
+            "confidence_tier": pred.confidence_tier,
+            "placement_eligible": pred.placement_eligible,
+            "explanation": pred.explanation,
+            "risk_message": risk_message.get(pred.risk_level, ""),
+            "predicted_at": pred.predicted_at.isoformat() if pred.predicted_at else None,
+        } if pred else None,
     }
 
 
@@ -124,6 +134,8 @@ async def what_if_simulation(
     engine.update_thresholds(
         sys_settings.placement_gpa_floor,
         sys_settings.placement_attendance_floor,
+        sys_settings.placement_reward_floor,
+        sys_settings.placement_activity_floor,
     )
 
     features = {
@@ -163,17 +175,20 @@ async def get_recommendations(
         select(Recommendation)
         .where(Recommendation.student_id == student.id)
         .order_by(desc(Recommendation.generated_at))
-        .limit(1)
+        .limit(4)
     )
-    rec = result.scalar_one_or_none()
+    recs = result.scalars().all()
 
     return {
-        "recommendation": {
-            "id": rec.id,
-            "content": rec.content,
-            "generated_at": rec.generated_at.isoformat() if rec.generated_at else None,
-            "model_used": rec.model_used,
-        } if rec else None
+        "recommendations": [
+            {
+                "id": rec.id,
+                "content": rec.content,
+                "generated_at": rec.generated_at.isoformat() if rec.generated_at else None,
+                "model_used": rec.model_used,
+            }
+            for rec in recs
+        ]
     }
 
 
@@ -223,10 +238,7 @@ async def get_own_interventions(
 
     result = await db.execute(
         select(Intervention)
-        .where(
-            Intervention.student_id == student.id,
-            Intervention.status.in_(["open", "in_progress"]),
-        )
+        .where(Intervention.student_id == student.id)
         .order_by(desc(Intervention.created_at))
     )
     interventions = result.scalars().all()
@@ -238,6 +250,7 @@ async def get_own_interventions(
                 "type": i.type,
                 "description": i.description,
                 "status": i.status,
+                "closed_at": i.closed_at.isoformat() if i.closed_at else None,
                 "created_at": i.created_at.isoformat() if i.created_at else None,
             }
             for i in interventions

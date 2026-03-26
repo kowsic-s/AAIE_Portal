@@ -1,9 +1,14 @@
 import useAuthStore from '../store/authStore'
 import { useTheme } from '../context/ThemeContext'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 const Navbar = ({ title, subtitle, onMenuToggle }) => {
   const { user } = useAuthStore()
   const { theme, toggle } = useTheme()
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const showStaffQuickAction = user?.role === 'staff' && !location.pathname.startsWith('/staff/students/')
 
   return (
     <header
@@ -25,6 +30,14 @@ const Navbar = ({ title, subtitle, onMenuToggle }) => {
         {subtitle && <div className="text-[0.8rem] mt-[1px]" style={{ color: 'var(--text-3)' }}>{subtitle}</div>}
       </div>
       <div className="flex items-center gap-2.5 ml-auto">
+        {showStaffQuickAction && (
+          <button className="btn-primary" onClick={() => navigate('/staff/interventions')}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Add Intervention
+          </button>
+        )}
         {/* Theme toggle */}
         <button
           onClick={toggle}

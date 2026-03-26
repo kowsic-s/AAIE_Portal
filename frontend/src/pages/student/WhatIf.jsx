@@ -1,168 +1,331 @@
-import { useState, useEffect, useCallback } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { getStudentDashboard, whatIf } from '../../api/student'
-import RiskBadge from '../../components/RiskBadge'
-import { motion } from 'framer-motion'
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { getStudentDashboard } from '../../api/student';
+import { useWhatIf } from '../../hooks/usePrediction';
+import RiskBadge from '../../components/RiskBadge';
 
-const FEATURES = [
-  { key: 'attendance_pct', label: 'Attendance %', min: 0, max: 100, step: 1 },
-  { key: 'gpa', label: 'GPA', min: 0, max: 10, step: 0.1 },
-  { key: 'reward_points', label: 'Reward Points', min: 0, max: 500, step: 5 },
-  { key: 'activity_points', label: 'Activity Points', min: 0, max: 300, step: 5 },
-]
+const RISK_TO_SCORE = { High: 78, Medium: 48, Low: 20 };
 
-const StudentWhatIf = () => {
-  const { data: dashData, isLoading: dashLoading } = useQuery({
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+const toPercentage = (value) => {
+  const num = Number(value ?? 0);
+  return clamp(Math.round(num * 100), 0, 100);
+};
+
+export default function StudentWhatIfPage() {
+  const { data } = useQuery({
     queryKey: ['student-dashboard'],
     queryFn: getStudentDashboard,
-    staleTime: 5 * 60 * 1000,
-  })
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+  const whatIfMut = useWhatIf();
 
-  const currentPerf = dashData?.data?.latest_performance ?? {}
-  const currentPred = dashData?.data?.latest_prediction ?? {}
+  const d = data?.data ?? {};
+  const pred = d.latest_prediction ?? d.prediction ?? {};
+  const perf = d.latest_performance ?? {};
+  const currentRiskLabel = pred?.risk_level ?? whatIfMut.data?.current_risk ?? 'Medium';
+  const currentRiskScore = RISK_TO_SCORE[currentRiskLabel] ?? 48;
 
-  const [values, setValues] = useState({
-    attendance_pct: 75,
-    gpa: 6.0,
-    reward_points: 50,
-    activity_points: 30,
-  })
-  const [simResult, setSimResult] = useState(null)
-  const [simLoading, setSimLoading] = useState(false)
-  const [debounceTimer, setDebounceTimer] = useState(null)
+  const [attendance, setAttendance] = useState(80);
+  const [gpa, setGpa] = useState(7.0);
+  const [rewardPoints, setRewardPoints] = useState(40);
+  const [activityPoints, setActivityPoints] = useState(30);
+  const [initialized, setInitialized] = useState(false);
+  const [autoSimulated, setAutoSimulated] = useState(false);
 
-  // Pre-fill from current performance
   useEffect(() => {
-    if (currentPerf && currentPerf.gpa != null) {
-      setValues({
-        attendance_pct: Number(currentPerf.attendance_pct ?? 75),
-        gpa: Number(currentPerf.gpa ?? 6),
-        reward_points: Number(currentPerf.reward_points ?? 50),
-        activity_points: Number(currentPerf.activity_points ?? 30),
-      })
+    if (!initialized && perf) {
+      setAttendance(Number(perf.attendance_pct ?? 80));
+      setGpa(Number(perf.gpa ?? 7.0));
+      setRewardPoints(Number(perf.reward_points ?? 40));
+      setActivityPoints(Number(perf.activity_points ?? 30));
+      setInitialized(true);
     }
-  }, [currentPerf.gpa])
+  }, [perf, initialized]);
 
-  const runSimulation = useCallback(async (vals) => {
-    setSimLoading(true)
-    try {
-      const res = await whatIf(vals)
-      setSimResult(res.data)
-    } catch {
-      // silent
-    } finally {
-      setSimLoading(false)
+  const payload = useMemo(
+    () => ({
+      attendance_pct: Number(attendance),
+      gpa: Number(gpa),
+      reward_points: Number(rewardPoints),
+      activity_points: Number(activityPoints),
+    }),
+    [attendance, gpa, rewardPoints, activityPoints]
+  );
+
+  useEffect(() => {
+    if (initialized && !autoSimulated && !whatIfMut.isPending) {
+      whatIfMut.mutate(payload);
+      setAutoSimulated(true);
     }
-  }, [])
+  }, [initialized, autoSimulated, payload, whatIfMut]);
 
-  const handleSliderChange = (key, val) => {
-    const newValues = { ...values, [key]: parseFloat(val) }
-    setValues(newValues)
-    if (debounceTimer) clearTimeout(debounceTimer)
-    const t = setTimeout(() => runSimulation(newValues), 500)
-    setDebounceTimer(t)
-  }
+  const simulation = whatIfMut.data ?? null;
+  const projectedRiskLabel = simulation?.projected_risk ?? currentRiskLabel;
+  const projectedRiskScore = RISK_TO_SCORE[projectedRiskLabel] ?? currentRiskScore;
+  const confidencePct = toPercentage(simulation?.projected_confidence ?? pred?.confidence ?? 0);
 
-  if (dashLoading) return <div className="animate-pulse space-y-4"><div className="h-8 bg-white/[0.08] rounded w-48" /><div className="h-64 bg-white/[0.08] rounded-xl" /></div>
+  const projectionData = [
+    { point: 'Current', score: currentRiskScore },
+    { point: 'Simulated', score: projectedRiskScore },
+  ];
+
+  const probabilityBreakdown = simulation?.probability_breakdown ?? {};
+  const probabilityData = [
+    {
+      name: 'Low',
+      value: toPercentage(
+        probabilityBreakdown.low ?? probabilityBreakdown.Low ?? probabilityBreakdown.prob_low
+      ),
+    },
+    {
+      name: 'Medium',
+      value: toPercentage(
+        probabilityBreakdown.medium ??
+          probabilityBreakdown.Medium ??
+          probabilityBreakdown.prob_medium
+      ),
+    },
+    {
+      name: 'High',
+      value: toPercentage(
+        probabilityBreakdown.high ?? probabilityBreakdown.High ?? probabilityBreakdown.prob_high
+      ),
+    },
+  ];
+
+  const runSimulation = () => {
+    whatIfMut.mutate(payload);
+  };
+
+  const resetToCurrent = () => {
+    setAttendance(Number(perf.attendance_pct ?? 80));
+    setGpa(Number(perf.gpa ?? 7.0));
+    setRewardPoints(Number(perf.reward_points ?? 40));
+    setActivityPoints(Number(perf.activity_points ?? 30));
+  };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-[#f0f4ff]">What-If Simulator</h1>
-        <p className="text-[#94a3b8] mt-1">Adjust your metrics to see how they affect your risk level</p>
-      </div>
+    <div className="student-page">
+      <section className="student-kpis">
+        <article className="student-kpi">
+          <header>
+            <h3>Current Risk</h3>
+          </header>
+          <div style={{ marginTop: '0.3rem' }}>
+            <RiskBadge level={currentRiskLabel} size="md" />
+          </div>
+          <p className="student-kpi-subtext">From your latest prediction</p>
+        </article>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sliders */}
-        <div className="card space-y-6">
-          <h2 className="font-semibold text-[#f0f4ff]">Adjust Metrics</h2>
-          {FEATURES.map((f) => (
-            <div key={f.key} className="space-y-1">
-              <div className="flex justify-between">
-                <label className="text-sm font-medium text-[#94a3b8]">{f.label}</label>
-                <span className="text-sm font-mono text-[#3b82f6]">
-                  {f.step < 1 ? Number(values[f.key]).toFixed(1) : Number(values[f.key])}
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-[#475569] w-6">{f.min}</span>
-                <input
-                  type="range"
-                  min={f.min}
-                  max={f.max}
-                  step={f.step}
-                  value={values[f.key]}
-                  onChange={(e) => handleSliderChange(f.key, e.target.value)}
-                  className="flex-1 accent-blue-600"
-                />
-                <span className="text-xs text-[#475569] w-8 text-right">{f.max}</span>
-              </div>
-              {currentPerf[f.key] != null && (
-                <p className="text-xs text-[#475569]">Current: {Number(currentPerf[f.key]).toFixed(f.step < 1 ? 1 : 0)}</p>
-              )}
+        <article className="student-kpi">
+          <header>
+            <h3>Projected Risk</h3>
+          </header>
+          <div style={{ marginTop: '0.3rem' }}>
+            <RiskBadge level={projectedRiskLabel} size="md" />
+          </div>
+          <p className="student-kpi-subtext">Live result from What-If simulation</p>
+        </article>
+
+        <article className="student-kpi">
+          <header>
+            <h3>Projected Confidence</h3>
+          </header>
+          <div className="student-kpi-value student-whatif-value">{confidencePct}%</div>
+          <p className="student-kpi-subtext">
+            {simulation?.projected_confidence_tier || pred?.confidence_tier || 'Estimated'}
+          </p>
+        </article>
+      </section>
+
+      <section className="student-grid student-grid-2">
+        <motion.article
+          className="student-shell"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+        >
+          <div className="student-shell-header">
+            <div>
+              <h2 className="student-shell-title">Scenario Controls</h2>
+              <p className="student-shell-subtitle">
+                Update academic metrics and run simulation.
+              </p>
             </div>
-          ))}
-        </div>
-
-        {/* Result */}
-        <div className="space-y-4">
-          {/* Current */}
-          <div className="card border border-white/10">
-            <h3 className="text-sm font-medium text-[#94a3b8] mb-2">Current Risk</h3>
-            <RiskBadge level={currentPred.risk_level} size="lg" />
-            {currentPred.confidence != null && (
-              <p className="text-sm text-[#94a3b8] mt-2">Confidence: {(currentPred.confidence * 100).toFixed(0)}%</p>
-            )}
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button className="btn-secondary" onClick={resetToCurrent}>
+                Reset
+              </button>
+              <button className="btn-primary" onClick={runSimulation} disabled={whatIfMut.isPending}>
+                {whatIfMut.isPending ? 'Simulating...' : 'Run Simulation'}
+              </button>
+            </div>
           </div>
 
-          {/* Simulated */}
-          <motion.div
-            key={simResult?.risk_level}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="card border border-[rgba(59,130,246,0.3)]"
-            style={{ background: 'rgba(59,130,246,0.06)' }}
-          >
-            <h3 className="text-sm font-medium text-[#3b82f6] mb-2">Simulated Risk</h3>
-            {simLoading ? (
-              <div className="flex items-center gap-2 text-[#94a3b8] text-sm">
-                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                Calculating...
+          <div className="student-shell-body" style={{ display: 'grid', gap: '1rem' }}>
+            <label className="student-control">
+              <div className="student-control-head">
+                <span>Attendance</span>
+                <strong>{attendance.toFixed(1)}%</strong>
               </div>
-            ) : simResult ? (
-              <>
-                <RiskBadge level={simResult.risk_level} size="lg" />
-                <p className="text-sm text-[#94a3b8] mt-2">Confidence: {(simResult.confidence * 100).toFixed(0)}%</p>
-                {simResult.risk_level !== currentPred.risk_level && (
-                  <p className="text-sm font-medium text-[#3b82f6] mt-1">
-                    ✨ Risk would change from <strong>{currentPred.risk_level}</strong> to <strong>{simResult.risk_level}</strong>
-                  </p>
-                )}
-                {simResult.probability_breakdown && (
-                  <div className="mt-3 space-y-1">
-                    {Object.entries(simResult.probability_breakdown).map(([label, p]) => (
-                      <div key={label} className="flex items-center gap-2">
-                        <span className="text-xs text-[#94a3b8] w-16">{label}</span>
-                        <div className="flex-1 bg-white/[0.08] rounded-full h-1.5">
-                          <div className={`h-1.5 rounded-full ${label === 'High' ? 'bg-[#ef4444]' : label === 'Medium' ? 'bg-[#f59e0b]' : 'bg-[#10b981]'}`} style={{ width: `${(p * 100).toFixed(1)}%` }} />
-                        </div>
-                        <span className="text-xs font-mono text-[#94a3b8] w-10 text-right">{(p * 100).toFixed(1)}%</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            ) : (
-              <p className="text-sm text-[#94a3b8]">Move the sliders to simulate.</p>
-            )}
-          </motion.div>
-        </div>
-      </div>
-    </div>
-  )
-}
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="0.5"
+                value={attendance}
+                onChange={(e) => setAttendance(Number(e.target.value))}
+              />
+            </label>
 
-export default StudentWhatIf
+            <label className="student-control">
+              <div className="student-control-head">
+                <span>GPA</span>
+                <strong>{gpa.toFixed(2)}</strong>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="10"
+                step="0.01"
+                value={gpa}
+                onChange={(e) => setGpa(Number(e.target.value))}
+              />
+            </label>
+
+            <label className="student-control">
+              <div className="student-control-head">
+                <span>Reward Points</span>
+                <strong>{rewardPoints}</strong>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="200"
+                step="1"
+                value={rewardPoints}
+                onChange={(e) => setRewardPoints(Number(e.target.value))}
+              />
+            </label>
+
+            <label className="student-control">
+              <div className="student-control-head">
+                <span>Activity Points</span>
+                <strong>{activityPoints}</strong>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="200"
+                step="1"
+                value={activityPoints}
+                onChange={(e) => setActivityPoints(Number(e.target.value))}
+              />
+            </label>
+
+            {whatIfMut.isError && (
+              <p style={{ color: 'var(--risk-high)', fontSize: '0.78rem' }}>
+                Simulation failed. Check values and try again.
+              </p>
+            )}
+          </div>
+        </motion.article>
+
+        <motion.article
+          className="student-shell"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.05 }}
+        >
+          <div className="student-shell-header">
+            <div>
+              <h2 className="student-shell-title">Risk Projection</h2>
+              <p className="student-shell-subtitle">
+                Comparison between current and simulated risk profile.
+              </p>
+            </div>
+          </div>
+
+          <div className="student-shell-body" style={{ height: 280 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={projectionData}>
+                <defs>
+                  <linearGradient id="studentRiskFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--accent)" stopOpacity={0.38} />
+                    <stop offset="100%" stopColor="var(--accent)" stopOpacity={0.04} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="point" stroke="var(--text-2)" />
+                <YAxis stroke="var(--text-2)" domain={[0, 100]} />
+                <Tooltip />
+                <Area
+                  type="monotone"
+                  dataKey="score"
+                  stroke="var(--accent)"
+                  strokeWidth={2}
+                  fill="url(#studentRiskFill)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.article>
+      </section>
+
+      <section className="student-shell">
+        <div className="student-shell-header">
+          <div>
+            <h2 className="student-shell-title">Probability Breakdown</h2>
+            <p className="student-shell-subtitle">
+              Distribution from the simulation output.
+            </p>
+          </div>
+        </div>
+
+        <div className="student-shell-body" style={{ display: 'grid', gap: '1rem' }}>
+          <div style={{ height: 220 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={probabilityData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="name" stroke="var(--text-2)" />
+                <YAxis domain={[0, 100]} stroke="var(--text-2)" />
+                <Tooltip formatter={(value) => `${value}%`} />
+                <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="var(--accent)" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="student-list-row">
+            <strong>Summary</strong>
+            <span>
+              {simulation?.explanation ||
+                'Run the simulation to get AI-generated insight for this scenario.'}
+            </span>
+          </div>
+
+          <div style={{ marginTop: '0.25rem' }}>
+            <Link className="student-quick-link" to="/student/recommendations">
+              Get Action Recommendations
+            </Link>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}

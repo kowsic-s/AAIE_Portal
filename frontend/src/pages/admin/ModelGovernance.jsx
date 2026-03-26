@@ -95,7 +95,7 @@ const AdminModelGovernance = () => {
                 <tr><td colSpan={7} className="px-5 py-10 text-center text-sm" style={{ color: 'var(--text-3)' }}>No models trained yet.</td></tr>
               ) : (
                 sorted.map((v) => (
-                  <tr key={v.version_id} className="transition-colors hover:bg-[rgba(255,255,255,0.02)]"
+                  <tr key={v.version_id} className="transition-colors hover:bg-[var(--surface-2)]"
                     style={{ background: v.is_active ? 'rgba(52,211,153,0.04)' : undefined }}>
                     <td className="px-5 py-3.5 font-mono text-[0.82rem] font-medium" style={{ color: 'var(--text-1)', borderBottom: '1px solid var(--border)' }}>{v.version_id}</td>
                     <td className="px-5 py-3.5" style={{ borderBottom: '1px solid var(--border)' }}>{typeBadge(v.model_type)}</td>

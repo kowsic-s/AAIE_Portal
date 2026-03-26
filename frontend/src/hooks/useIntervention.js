@@ -6,7 +6,8 @@ export const useInterventions = (params) => {
   const query = useQuery({
     queryKey: ['interventions', params],
     queryFn: () => getInterventions(params).then((r) => r.data),
-    staleTime: 60 * 1000,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
   })
   return {
     interventions: query.data?.items ?? [],
@@ -34,6 +35,9 @@ export const useUpdateIntervention = () => {
       updateIntervention(interventionId ?? id, payload ?? data).then((r) => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['interventions'] })
+      queryClient.invalidateQueries({ queryKey: ['staff-dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['students'] })
+      queryClient.invalidateQueries({ queryKey: ['student-detail'] })
       toast.success('Intervention updated')
     },
   })
