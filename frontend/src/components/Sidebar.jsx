@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import useAuthStore from '../store/authStore'
-import { logoutApi } from '../api/auth'
+import useAuthStore from '../store/authStore.js'
+import { logoutApi } from '../api/auth.js'
 
 const I = ({ children }) => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">{children}</svg>

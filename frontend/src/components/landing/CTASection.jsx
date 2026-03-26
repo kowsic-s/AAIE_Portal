@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import GlassCard from '../ui/GlassCard'
+import GlassCard from '../ui/GlassCard.jsx'
 
 export default function CTASection() {
   return (

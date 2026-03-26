@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { staggerContainer, staggerItem } from '../../lib/motionVariants.js'
-import SectionLabel from './SectionLabel'
+import SectionLabel from './SectionLabel.jsx'
 
 const FEATURES = [
   {

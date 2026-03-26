@@ -1,5 +1,5 @@
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import { RECHARTS_RISK_COLORS } from '../../utils/riskColors'
+import { RECHARTS_RISK_COLORS } from '../../utils/riskColors.js'
 
 const RiskDistributionChart = ({ data = {} }) => {
   const chartData = [

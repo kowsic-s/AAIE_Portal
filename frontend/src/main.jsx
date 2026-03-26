@@ -2,10 +2,10 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ThemeProvider } from './context/ThemeContext'
+import { ThemeProvider } from './context/ThemeContext.jsx'
 import App from './App.jsx'
-import ToastContainer from './components/ToastContainer'
-import { toast } from './store/toastStore'
+import ToastContainer from './components/ToastContainer.jsx'
+import { toast } from './store/toastStore.js'
 import './index.css'
 
 const queryClient = new QueryClient({

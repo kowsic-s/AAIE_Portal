@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { getStaffStudents, getStudentDetail } from '../api/staff'
+import { getStaffStudents, getStudentDetail } from '../api/staff.js'
 
 export const useStudents = (params) => {
   const query = useQuery({

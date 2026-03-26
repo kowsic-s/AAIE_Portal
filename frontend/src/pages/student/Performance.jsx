@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { getPerformanceHistory } from '../../api/student'
-import GpaTrendChart from '../../components/charts/GpaTrendChart'
-import AttendanceChart from '../../components/charts/AttendanceChart'
-import DataTable from '../../components/DataTable'
-import { formatDate } from '../../utils/formatters'
+import { getPerformanceHistory } from '../../api/student.js'
+import GpaTrendChart from '../../components/charts/GpaTrendChart.jsx'
+import AttendanceChart from '../../components/charts/AttendanceChart.jsx'
+import DataTable from '../../components/DataTable.jsx'
+import { formatDate } from '../../utils/formatters.js'
 
 const COLUMNS = [
   { key: 'semester', label: 'Semester' },

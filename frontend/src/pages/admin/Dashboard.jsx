@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getAdminDashboard, listModelVersions, getSystemSettings, listDepartments } from '../../api/admin'
-import { formatDate } from '../../utils/formatters'
+import { getAdminDashboard, listModelVersions, getSystemSettings, listDepartments } from '../../api/admin.js'
+import { formatDate } from '../../utils/formatters.js'
 
 /* ── helpers ── */
 const useCountUp = (target, duration = 1400, trigger = true) => {

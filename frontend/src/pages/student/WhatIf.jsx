@@ -13,9 +13,9 @@ import {
 } from 'recharts';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { getStudentDashboard } from '../../api/student';
-import { useWhatIf } from '../../hooks/usePrediction';
-import RiskBadge from '../../components/RiskBadge';
+import { getStudentDashboard } from '../../api/student.js';
+import { useWhatIf } from '../../hooks/usePrediction.js';
+import RiskBadge from '../../components/RiskBadge.jsx';
 
 const RISK_TO_SCORE = { High: 78, Medium: 48, Low: 20 };
 

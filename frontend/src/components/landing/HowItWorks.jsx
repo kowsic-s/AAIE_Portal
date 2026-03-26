@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
 import { useRef } from 'react'
-import { staggerContainer, staggerItem } from '../../lib/motionVariants'
-import GlassCard from '../ui/GlassCard'
+import { staggerContainer, staggerItem } from '../../lib/motionVariants.js'
+import GlassCard from '../ui/GlassCard.jsx'
 import SectionLabel from './SectionLabel'
 
 const STEPS = [

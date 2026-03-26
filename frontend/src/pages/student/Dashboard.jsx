@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { getStudentDashboard } from '../../api/student'
-import RiskBadge from '../../components/RiskBadge'
+import { getStudentDashboard } from '../../api/student.js'
+import RiskBadge from '../../components/RiskBadge.jsx'
 
 const QuickIcon = ({ kind }) => {
   if (kind === 'performance') return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>

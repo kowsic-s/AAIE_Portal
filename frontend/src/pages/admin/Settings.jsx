@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getSystemSettings, updateSystemSettings, recalculateRisk } from '../../api/admin'
-import { toast } from '../../store/toastStore'
+import { getSystemSettings, updateSystemSettings, recalculateRisk } from '../../api/admin.js'
+import { toast } from '../../store/toastStore.js'
 
 const AdminSettings = () => {
   const qc = useQueryClient()

@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { listModelVersions, promoteModel, trainModel } from '../../api/admin'
-import { formatDate } from '../../utils/formatters'
-import { toast } from '../../store/toastStore'
+import { listModelVersions, promoteModel, trainModel } from '../../api/admin.js'
+import { formatDate } from '../../utils/formatters.js'
+import { toast } from '../../store/toastStore.js'
 
 const typeBadge = (type) => {
   const isRF = type?.toLowerCase().includes('random')

@@ -5,8 +5,8 @@ import {
   listUsers, createUser, updateUser, toggleUserActive,
   resetUserPassword, setUserPassword, deleteUser,
 } from '../../api/admin'
-import { formatDate } from '../../utils/formatters'
-import { toast } from '../../store/toastStore'
+import { formatDate } from '../../utils/formatters.js'
+import { toast } from '../../store/toastStore.js'
 
 const ROLES = ['admin', 'staff', 'student']
 const TABS = [

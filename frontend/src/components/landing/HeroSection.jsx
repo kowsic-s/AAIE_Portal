@@ -1,8 +1,8 @@
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
-import { fadeUp, fadeIn } from '../../lib/motionVariants'
-import { useCountUp } from '../../hooks/useCountUp'
-import GlassCard from '../ui/GlassCard'
+import { fadeUp, fadeIn } from '../../lib/motionVariants.js'
+import { useCountUp } from '../../hooks/useCountUp.js'
+import GlassCard from '../ui/GlassCard.jsx'
 import LandingRiskBadge from '../ui/LandingRiskBadge'
 
 const STUDENTS = [

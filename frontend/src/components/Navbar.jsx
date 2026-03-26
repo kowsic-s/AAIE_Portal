@@ -1,5 +1,5 @@
-import useAuthStore from '../store/authStore'
-import { useTheme } from '../context/ThemeContext'
+import useAuthStore from '../store/authStore.js'
+import { useTheme } from '../context/ThemeContext.jsx'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 const Navbar = ({ title, subtitle, onMenuToggle }) => {

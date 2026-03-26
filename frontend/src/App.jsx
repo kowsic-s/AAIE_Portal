@@ -2,36 +2,36 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
 
-import PrivateRoute from './components/PrivateRoute'
-import Sidebar from './components/Sidebar'
-import Navbar from './components/Navbar'
-import useAuthStore from './store/authStore'
+import PrivateRoute from './components/PrivateRoute.jsx'
+import Sidebar from './components/Sidebar.jsx'
+import Navbar from './components/Navbar.jsx'
+import useAuthStore from './store/authStore.js'
 
 // Auth
-import LoginPage from './pages/LoginPage'
-import LandingPage from './pages/LandingPage'
+import LoginPage from './pages/LoginPage.jsx'
+import LandingPage from './pages/LandingPage.jsx'
 
 // Admin pages
-import AdminDashboard from './pages/admin/Dashboard'
-import AdminUsers from './pages/admin/Users'
-import AdminDepartments from './pages/admin/Departments'
-import AdminSettings from './pages/admin/Settings'
-import AdminModelGovernance from './pages/admin/ModelGovernance'
-import AdminBulkUpload from './pages/admin/BulkUpload'
+import AdminDashboard from './pages/admin/Dashboard.jsx'
+import AdminUsers from './pages/admin/Users.jsx'
+import AdminDepartments from './pages/admin/Departments.jsx'
+import AdminSettings from './pages/admin/Settings.jsx'
+import AdminModelGovernance from './pages/admin/ModelGovernance.jsx'
+import AdminBulkUpload from './pages/admin/BulkUpload.jsx'
 
 // Staff pages
-import StaffDashboard from './pages/staff/Dashboard'
-import StaffStudents from './pages/staff/Students'
-import StudentDetail from './pages/staff/StudentDetail'
-import StaffInterventions from './pages/staff/Interventions'
-import StaffUpload from './pages/staff/Upload'
+import StaffDashboard from './pages/staff/Dashboard.jsx'
+import StaffStudents from './pages/staff/Students.jsx'
+import StudentDetail from './pages/staff/StudentDetail.jsx'
+import StaffInterventions from './pages/staff/Interventions.jsx'
+import StaffUpload from './pages/staff/Upload.jsx'
 
 // Student pages
-import StudentDashboard from './pages/student/Dashboard'
-import StudentPerformance from './pages/student/Performance'
-import StudentWhatIf from './pages/student/WhatIf'
-import StudentRecommendations from './pages/student/Recommendations'
-import StudentInterventions from './pages/student/Interventions'
+import StudentDashboard from './pages/student/Dashboard.jsx'
+import StudentPerformance from './pages/student/Performance.jsx'
+import StudentWhatIf from './pages/student/WhatIf.jsx'
+import StudentRecommendations from './pages/student/Recommendations.jsx'
+import StudentInterventions from './pages/student/Interventions.jsx'
 
 const PAGE_TITLES = {
   '/admin/dashboard': 'Dashboard',

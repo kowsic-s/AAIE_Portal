@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth } from '../hooks/useAuth.js'
 import { Navigate } from 'react-router-dom'
-import useAuthStore from '../store/authStore'
+import useAuthStore from '../store/authStore.js'
 
 const LoginPage = () => {
   const [email, setEmail] = useState('')

@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getRecommendations, generateRecommendation } from '../../api/student'
-import { formatDate } from '../../utils/formatters'
+import { getRecommendations, generateRecommendation } from '../../api/student.js'
+import { formatDate } from '../../utils/formatters.js'
 import { motion } from 'framer-motion'
-import { toast } from '../../store/toastStore'
+import { toast } from '../../store/toastStore.js'
 
 const StudentRecommendations = () => {
   const qc = useQueryClient()

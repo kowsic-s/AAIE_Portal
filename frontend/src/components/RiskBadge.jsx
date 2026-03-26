@@ -1,4 +1,4 @@
-import { getRiskColor } from '../utils/riskColors'
+import { getRiskColor } from '../utils/riskColors.js'
 
 const RiskBadge = ({ level, risk_level, size = 'md' }) => {
   const riskLevel = level ?? risk_level

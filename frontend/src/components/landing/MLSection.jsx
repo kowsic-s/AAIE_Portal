@@ -1,8 +1,8 @@
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
-import { fadeUp } from '../../lib/motionVariants'
-import GlassCard from '../ui/GlassCard'
-import SectionLabel from './SectionLabel'
+import { fadeUp } from '../../lib/motionVariants.js'
+import GlassCard from '../ui/GlassCard.jsx'
+import SectionLabel from './SectionLabel.jsx'
 
 const FEATURE_BARS = [
   { label: 'Attendance %', width: '82%', importance: '0.82' },

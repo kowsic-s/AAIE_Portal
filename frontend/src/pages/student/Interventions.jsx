@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { getOwnInterventions } from '../../api/student'
-import DataTable from '../../components/DataTable'
-import { formatDate } from '../../utils/formatters'
+import { getOwnInterventions } from '../../api/student.js'
+import DataTable from '../../components/DataTable.jsx'
+import { formatDate } from '../../utils/formatters.js'
 
 const toLabel = (value) => {
   if (!value) return '—'

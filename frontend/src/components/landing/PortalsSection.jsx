@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { staggerContainer, staggerItem } from '../../lib/motionVariants'
-import { loginApi } from '../../api/auth'
-import useAuthStore from '../../store/authStore'
-import GlassCard from '../ui/GlassCard'
-import SectionLabel from './SectionLabel'
+import { staggerContainer, staggerItem } from '../../lib/motionVariants.js'
+import { loginApi } from '../../api/auth.js'
+import useAuthStore from '../../store/authStore.js'
+import GlassCard from '../ui/GlassCard.jsx'
+import SectionLabel from './SectionLabel.jsx'
 
 const PORTALS = [
   {

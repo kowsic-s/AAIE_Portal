@@ -1,12 +1,12 @@
-import LandingNavbar from '../components/landing/Navbar'
-import HeroSection from '../components/landing/HeroSection'
-import HowItWorks from '../components/landing/HowItWorks'
-import FeaturesSection from '../components/landing/FeaturesSection'
-import PortalsSection from '../components/landing/PortalsSection'
-import MLSection from '../components/landing/MLSection'
-import CTASection from '../components/landing/CTASection'
-import Footer from '../components/landing/Footer'
-import PageBackground from '../components/ui/PageBackground'
+import LandingNavbar from '../components/landing/Navbar.jsx'
+import HeroSection from '../components/landing/HeroSection.jsx'
+import HowItWorks from '../components/landing/HowItWorks.jsx'
+import FeaturesSection from '../components/landing/FeaturesSection.jsx'
+import PortalsSection from '../components/landing/PortalsSection.jsx'
+import MLSection from '../components/landing/MLSection.jsx'
+import CTASection from '../components/landing/CTASection.jsx'
+import Footer from '../components/landing/Footer.jsx'
+import PageBackground from '../components/ui/PageBackground.jsx'
 
 const STATIC_STATS = {
   totalStudents: 1284,

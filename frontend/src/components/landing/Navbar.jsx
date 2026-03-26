@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import ThemeToggle from '../ui/ThemeToggle'
+import ThemeToggle from '../ui/ThemeToggle.jsx'
 
 export default function LandingNavbar() {
   const navigate = useNavigate()

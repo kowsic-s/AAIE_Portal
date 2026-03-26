@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useStudents } from '../../hooks/useStudents'
-import RiskBadge from '../../components/RiskBadge'
+import { useStudents } from '../../hooks/useStudents.js'
+import RiskBadge from '../../components/RiskBadge.jsx'
 
 const FILTERS = ['', 'Low', 'Medium', 'High']
 

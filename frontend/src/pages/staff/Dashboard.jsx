@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { getStaffDashboard } from '../../api/staff'
-import RiskDistributionChart from '../../components/charts/RiskDistributionChart'
-import RiskBadge from '../../components/RiskBadge'
+import { getStaffDashboard } from '../../api/staff.js'
+import RiskDistributionChart from '../../components/charts/RiskDistributionChart.jsx'
+import RiskBadge from '../../components/RiskBadge.jsx'
 
 const StaffDashboard = () => {
   const { data, isLoading, isError } = useQuery({

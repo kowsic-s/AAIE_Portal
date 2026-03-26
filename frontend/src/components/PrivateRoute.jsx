@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom'
-import useAuthStore from '../store/authStore'
+import useAuthStore from '../store/authStore.js'
 
 const Spinner = () => (
   <div className="flex items-center justify-center min-h-screen bg-gray-50">

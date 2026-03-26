@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { bulkUploadStudents, bulkUploadStaff } from '../../api/admin'
-import { toast } from '../../store/toastStore'
+import { bulkUploadStudents, bulkUploadStaff } from '../../api/admin.js'
+import { toast } from '../../store/toastStore.js'
 
 const UPLOAD_TYPES = [
   {

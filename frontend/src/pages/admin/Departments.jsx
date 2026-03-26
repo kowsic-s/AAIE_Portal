@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   listDepartments, createDepartment, updateDepartment,
   deleteDepartment, assignMentor, listUsers,
-} from '../../api/admin'
-import { toast } from '../../store/toastStore'
+} from '../../api/admin.js'
+import { toast } from '../../store/toastStore.js'
 
 const defaultForm = { code: '', name: '', description: '' }
 
