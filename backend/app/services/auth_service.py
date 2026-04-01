@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+import logging
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,6 +9,7 @@ from app.models.user import User
 from app.config import get_settings
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
@@ -20,7 +22,11 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    try:
+        return pwd_context.verify(plain, hashed)
+    except Exception as exc:
+        logger.warning("Password verification failed due to hash/backend issue: %s", exc)
+        return False
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
