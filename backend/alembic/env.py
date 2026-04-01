@@ -73,11 +73,20 @@ async def run_async_migrations() -> None:
         "yes",
         "on",
     }
+    ssl_insecure_skip_verify = os.environ.get("DATABASE_SSL_INSECURE_SKIP_VERIFY", "false").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
     if ssl_required and url.startswith("mysql"):
-        ssl_ca_path = os.environ.get("DATABASE_SSL_CA_PATH")
-        ssl_ctx = ssl.create_default_context(cafile=ssl_ca_path or None)
-        ssl_ctx.check_hostname = True
-        ssl_ctx.verify_mode = ssl.CERT_REQUIRED
+        if ssl_insecure_skip_verify:
+            ssl_ctx = ssl._create_unverified_context()
+        else:
+            ssl_ca_path = os.environ.get("DATABASE_SSL_CA_PATH")
+            ssl_ctx = ssl.create_default_context(cafile=ssl_ca_path or None)
+            ssl_ctx.check_hostname = True
+            ssl_ctx.verify_mode = ssl.CERT_REQUIRED
         connect_args["ssl"] = ssl_ctx
 
     connectable = async_engine_from_config(

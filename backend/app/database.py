@@ -23,9 +23,12 @@ database_url = _sanitize_database_url(settings.DATABASE_URL)
 
 engine_connect_args = {}
 if settings.DATABASE_SSL_REQUIRED and database_url.startswith("mysql"):
-    ssl_ctx = ssl.create_default_context(cafile=settings.DATABASE_SSL_CA_PATH or None)
-    ssl_ctx.check_hostname = True
-    ssl_ctx.verify_mode = ssl.CERT_REQUIRED
+    if settings.DATABASE_SSL_INSECURE_SKIP_VERIFY:
+        ssl_ctx = ssl._create_unverified_context()
+    else:
+        ssl_ctx = ssl.create_default_context(cafile=settings.DATABASE_SSL_CA_PATH or None)
+        ssl_ctx.check_hostname = True
+        ssl_ctx.verify_mode = ssl.CERT_REQUIRED
     engine_connect_args["ssl"] = ssl_ctx
 
 engine = create_async_engine(

@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "mysql+aiomysql://aaie_user:aaie_pass@db:3306/aaie"
     DATABASE_SSL_REQUIRED: bool = False
     DATABASE_SSL_CA_PATH: Optional[str] = None
+    DATABASE_SSL_INSECURE_SKIP_VERIFY: bool = False
 
     # JWT
     SECRET_KEY: str = "changeme-strong-random-secret-key-32chars"
