@@ -8,7 +8,9 @@ _cfg_logger = logging.getLogger(__name__)
 
 class Settings(BaseSettings):
     # Database
-    DATABASE_URL: str = "mysql+asyncmy://aaie_user:aaie_pass@db:3306/aaie"
+    DATABASE_URL: str = "mysql+aiomysql://aaie_user:aaie_pass@db:3306/aaie"
+    DATABASE_SSL_REQUIRED: bool = False
+    DATABASE_SSL_CA_PATH: Optional[str] = None
 
     # JWT
     SECRET_KEY: str = "changeme-strong-random-secret-key-32chars"

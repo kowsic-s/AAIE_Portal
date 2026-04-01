@@ -2,6 +2,7 @@
 
 import asyncio
 import os
+import ssl
 from logging.config import fileConfig
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
@@ -49,13 +50,28 @@ async def run_async_migrations() -> None:
     # Use DATABASE_URL from .env, ensuring async driver
     url = os.environ.get("DATABASE_URL", configuration.get("sqlalchemy.url", ""))
     if "pymysql" in url:
-        url = url.replace("pymysql", "asyncmy")
+        url = url.replace("pymysql", "aiomysql")
     configuration["sqlalchemy.url"] = url
+
+    connect_args = {}
+    ssl_required = os.environ.get("DATABASE_SSL_REQUIRED", "false").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+    if ssl_required and url.startswith("mysql"):
+        ssl_ca_path = os.environ.get("DATABASE_SSL_CA_PATH")
+        ssl_ctx = ssl.create_default_context(cafile=ssl_ca_path)
+        ssl_ctx.check_hostname = True
+        ssl_ctx.verify_mode = ssl.CERT_REQUIRED
+        connect_args["ssl"] = ssl_ctx
 
     connectable = async_engine_from_config(
         configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args=connect_args,
     )
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
