@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth.js'
 import { Navigate } from 'react-router-dom'
 import useAuthStore from '../store/authStore.js'
+import { DEMO_ACCOUNTS } from '../mock/mockApi.js'
 
 const LoginPage = () => {
   const [email, setEmail] = useState('')
@@ -113,9 +114,30 @@ const LoginPage = () => {
             </button>
           </form>
 
+          <div className="mt-5 space-y-2">
+            <p className="text-[11px] uppercase tracking-wider font-semibold text-[#64748b]">Demo Access</p>
+            <div className="grid gap-2">
+              {DEMO_ACCOUNTS.map((acc) => (
+                <button
+                  key={acc.role}
+                  type="button"
+                  onClick={() => {
+                    setEmail(acc.email)
+                    setPassword(acc.password)
+                  }}
+                  className="w-full text-left rounded-xl px-3 py-2 border transition-colors"
+                  style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}
+                >
+                  <div className="text-sm font-semibold text-[#e2e8f0]">{acc.role}</div>
+                  <div className="text-xs text-[#94a3b8]">{acc.email} / {acc.password}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="mt-6 pt-4 border-t border-white/[0.08]">
             <p className="text-xs text-[#475569] text-center">
-              Demo accounts — Admin: admin@aaie.edu / Admin@123 · Staff: staff1@aaie.edu / Staff@123
+              Demo mode is enabled. Use any role card above to auto-fill credentials.
             </p>
           </div>
         </div>

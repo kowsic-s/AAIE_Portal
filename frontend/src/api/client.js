@@ -1,7 +1,9 @@
 import axios from 'axios'
 import useAuthStore from '../store/authStore'
+import { mockAdapter } from '../mock/mockApi'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const USE_MOCK = String(import.meta.env.VITE_USE_MOCK ?? 'true').toLowerCase() === 'true'
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -10,6 +12,10 @@ const apiClient = axios.create({
   },
   timeout: 30000,
 })
+
+if (USE_MOCK) {
+  apiClient.defaults.adapter = mockAdapter
+}
 
 // Request interceptor — attach JWT
 apiClient.interceptors.request.use(
@@ -67,7 +73,10 @@ apiClient.interceptors.response.use(
       }
 
       try {
-        const response = await axios.post(`${BASE_URL}/auth/refresh`, {
+        const refreshClient = USE_MOCK
+          ? apiClient
+          : axios.create({ baseURL: BASE_URL, headers: { 'Content-Type': 'application/json' }, timeout: 30000 })
+        const response = await refreshClient.post('/auth/refresh', {
           refresh_token: refreshToken,
         })
         const { access_token } = response.data
