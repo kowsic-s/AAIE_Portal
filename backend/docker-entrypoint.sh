@@ -14,5 +14,18 @@ else
 	echo "Skipping Alembic migrations (RUN_MIGRATIONS != 1)."
 fi
 
+if [ "${RUN_SEED:-0}" = "1" ]; then
+	echo "Running seed script..."
+	if ! python seed.py; then
+		if [ "${SEED_STRICT:-0}" = "1" ]; then
+			echo "Seed failed and SEED_STRICT=1. Exiting."
+			exit 1
+		fi
+		echo "Seed failed. Continuing startup."
+	fi
+else
+	echo "Skipping seed (RUN_SEED != 1)."
+fi
+
 echo "Starting FastAPI server..."
 exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 2
