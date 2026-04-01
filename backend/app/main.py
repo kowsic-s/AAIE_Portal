@@ -26,10 +26,16 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS
-origins = [o.strip() for o in settings.CORS_ORIGINS.split(",")]
+def _normalize_origin(origin: str) -> str:
+    # Normalize env-provided origins like '"https://app.vercel.app/"'.
+    return origin.strip().strip("\"'").rstrip("/")
+
+
+origins = [_normalize_origin(o) for o in settings.CORS_ORIGINS.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=settings.CORS_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

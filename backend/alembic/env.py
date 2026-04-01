@@ -3,6 +3,7 @@
 import asyncio
 import os
 import ssl
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from logging.config import fileConfig
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
@@ -27,8 +28,19 @@ import app.models  # noqa — registers all ORM models
 target_metadata = Base.metadata
 
 
+def _sanitize_database_url(url: str) -> str:
+    parts = urlsplit(url)
+    filtered = [
+        (k, v)
+        for k, v in parse_qsl(parts.query, keep_blank_values=True)
+        if k.lower() not in {"ssl", "sslmode", "ssl_mode", "ssl-mode"}
+    ]
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(filtered), parts.fragment))
+
+
 def run_migrations_offline() -> None:
     url = os.environ.get("DATABASE_URL", config.get_main_option("sqlalchemy.url"))
+    url = _sanitize_database_url(url)
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -51,6 +63,7 @@ async def run_async_migrations() -> None:
     url = os.environ.get("DATABASE_URL", configuration.get("sqlalchemy.url", ""))
     if "pymysql" in url:
         url = url.replace("pymysql", "aiomysql")
+    url = _sanitize_database_url(url)
     configuration["sqlalchemy.url"] = url
 
     connect_args = {}
@@ -62,7 +75,7 @@ async def run_async_migrations() -> None:
     }
     if ssl_required and url.startswith("mysql"):
         ssl_ca_path = os.environ.get("DATABASE_SSL_CA_PATH")
-        ssl_ctx = ssl.create_default_context(cafile=ssl_ca_path)
+        ssl_ctx = ssl.create_default_context(cafile=ssl_ca_path or None)
         ssl_ctx.check_hostname = True
         ssl_ctx.verify_mode = ssl.CERT_REQUIRED
         connect_args["ssl"] = ssl_ctx

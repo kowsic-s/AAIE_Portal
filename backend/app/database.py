@@ -1,4 +1,5 @@
 import ssl
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
@@ -6,15 +7,29 @@ from app.config import get_settings
 
 settings = get_settings()
 
+
+def _sanitize_database_url(url: str) -> str:
+    # Remove URL SSL query params so aiomysql gets SSL via connect_args only.
+    parts = urlsplit(url)
+    filtered = [
+        (k, v)
+        for k, v in parse_qsl(parts.query, keep_blank_values=True)
+        if k.lower() not in {"ssl", "sslmode", "ssl_mode", "ssl-mode"}
+    ]
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(filtered), parts.fragment))
+
+
+database_url = _sanitize_database_url(settings.DATABASE_URL)
+
 engine_connect_args = {}
-if settings.DATABASE_SSL_REQUIRED and settings.DATABASE_URL.startswith("mysql"):
-    ssl_ctx = ssl.create_default_context(cafile=settings.DATABASE_SSL_CA_PATH)
+if settings.DATABASE_SSL_REQUIRED and database_url.startswith("mysql"):
+    ssl_ctx = ssl.create_default_context(cafile=settings.DATABASE_SSL_CA_PATH or None)
     ssl_ctx.check_hostname = True
     ssl_ctx.verify_mode = ssl.CERT_REQUIRED
     engine_connect_args["ssl"] = ssl_ctx
 
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    database_url,
     echo=settings.APP_ENV == "development",
     pool_pre_ping=True,
     pool_recycle=3600,

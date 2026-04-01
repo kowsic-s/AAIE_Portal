@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     # App
     APP_ENV: str = "development"
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
+    CORS_ORIGIN_REGEX: Optional[str] = None
 
     class Config:
         env_file = ".env"
